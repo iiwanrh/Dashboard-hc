@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard Human Capital</title>
+<!-- Tailwind "Play CDN": sama seperti versi PHP lama, dikonfigurasi lewat JS tanpa
+     build step khusus Tailwind. darkMode:'class' dipakai supaya selaras dengan
+     toggle tema React (lihat src/components/App.jsx). -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { darkMode: 'class', theme: { extend: { screens: { xs: '420px' } } } };
+</script>
+</head>
+<body>
+<div id="root"><p style="text-align:center;padding:48px;color:#64748b;font:14px/1.5 'Segoe UI',system-ui,sans-serif">Memuat aplikasi…</p></div>
+<script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
