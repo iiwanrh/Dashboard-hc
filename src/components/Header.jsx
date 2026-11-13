@@ -6,7 +6,7 @@ const NAV_MAIN = [{ r: 'dashboard', label: '📊 Dashboard' }, { r: 'recruitment
 const NAV_OPS = [{ r: 'hc', label: 'Operasional HC' }, { r: 'dinas', label: 'Operasional Dinas' }, { r: 'tugas', label: 'Operasional Tugas' }];
 const NAV_ADM = [{ r: 'administrasi', label: 'Karyawan (Tetap · Kontrak · PHL)' }, { r: 'memo', label: 'Administrasi Memo' }];
 
-export default function Header({ route, userName, theme, onToggleTheme, onLogout, sel, onSelChange }) {
+export default function Header({ route, isAdmin, userName, theme, onToggleTheme, onLoginClick, onLogout, sel, onSelChange }) {
   const [navOpen, setNavOpen] = useState(false);
   const [ddOpen, setDdOpen] = useState(null);
   const barRef = useRef(null);
@@ -63,7 +63,9 @@ export default function Header({ route, userName, theme, onToggleTheme, onLogout
     </label>
   );
 
-  // Notifikasi, mode gelap/terang, nama pengguna & logout: satu kelompok.
+  // Notifikasi, mode gelap/terang: selalu tampil. Sisi admin: kalau sudah login
+  // tampilkan nama + tombol Keluar; kalau belum (mode pengunjung/read-only)
+  // tampilkan tombol "Login Admin" saja.
   // Layar lebar (>=1024px) tampil di bar; layar kecil dipindah ke dalam panel menu burger.
   const Actions = ({ className }) => (
     <div className={'items-center gap-2 ' + className}>
@@ -71,10 +73,18 @@ export default function Header({ route, userName, theme, onToggleTheme, onLogout
       <button type="button" onClick={onToggleTheme} className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/15 hover:bg-white/25 transition" title={theme === 'dark' ? 'Mode terang' : 'Mode gelap'}>
         {theme === 'dark' ? '☀️' : '🌙'}
       </button>
-      <span className="max-w-[110px] truncate text-xs opacity-90">{userName || '—'}</span>
-      <button type="button" onClick={onLogout} title="Keluar dari aplikasi" className="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 active:scale-95 transition rounded-lg px-3 py-2 text-sm font-semibold shadow-sm">
-        🚪 <span>Keluar</span>
-      </button>
+      {isAdmin ? (
+        <>
+          <span className="max-w-[110px] truncate text-xs opacity-90">{userName || '—'}</span>
+          <button type="button" onClick={onLogout} title="Keluar dari aplikasi" className="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 active:scale-95 transition rounded-lg px-3 py-2 text-sm font-semibold shadow-sm">
+            🚪 <span>Keluar</span>
+          </button>
+        </>
+      ) : (
+        <button type="button" onClick={onLoginClick} title="Login sebagai admin untuk mengubah data" className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 active:scale-95 transition rounded-lg px-3 py-2 text-sm font-semibold shadow-sm">
+          🔑 <span>Login Admin</span>
+        </button>
+      )}
     </div>
   );
 

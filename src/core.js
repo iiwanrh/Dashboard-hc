@@ -36,11 +36,14 @@ export const T = {
     sp: [F('no_sp', 'No. SP'), F('nik', 'NIK Karyawan', 'k'), F('jenis_sp', 'Jenis SP', 's', L.sp), F('tgl_terbit', 'Tanggal Terbit', 'd'), F('masa_berlaku', 'Masa Berlaku (bulan)', 'n'), F('no_pelanggaran', 'No. Pelanggaran')]
 };
 // ---------- helper (tema gelap/terang kini dikelola React, lihat App.jsx)
-export let DB = {}, X = {}, SEL = '', Q = [], CH = [], ADMSORT = 'nama';
+export let DB = {}, X = {}, SEL = '', Q = [], CH = [], ADMSORT = 'nama', ADMIN = false;
 export function setDB(v) { DB = v; }
 export function setSEL(v) { SEL = v; }
 export function setADMSORT(v) { ADMSORT = v; }
 export function setX(v) { X = v; }
+// Mode admin (sudah login) vs mode pengunjung (hanya baca). Dipakai tbl()/admAll()
+// untuk menyembunyikan tombol Tambah/Ubah/Hapus/Impor saat belum login.
+export function setAdmin(v) { ADMIN = v; }
 export function resetCharts() { CH.forEach(c => c.destroy()); CH = []; Q = []; }
 export function runChartQueue() { Q.forEach(f => f()); }
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -112,6 +115,7 @@ export const head = (t, s) => `<div class="ph"><h1>${t}</h1><p>${s}</p></div>`;
 export const sec = (t, r, b) => `<div class="sh"><h2>${t}</h2><a class="btn p" href="#/${r}">Buka halaman ▶</a></div>${b}`;
 export const col = (t, k) => T[t].find(f => f.k == k);
 export function tbl(t, title, show, o = {}) {
+    const ro = o.ro || !ADMIN; // mode pengunjung (belum login) selalu read-only, apapun pengaturan tabelnya
     const cols = show.map(s => typeof s == 'string' ? col(t, s) : s), rows = o.rows || DB[t];
     const cell = (r, c) => {
         const v = c.c ? c.c(r) : r[c.k];
@@ -121,7 +125,7 @@ export function tbl(t, title, show, o = {}) {
             return '';
         return c.bd || c.ty == 'b' ? bd(v) : c.ty == 'd' ? fd(v) : c.ty == 'm' ? hm(v) : c.ty == 'n' ? (c.rp ? rp(v) : nf(v)) : esc(v);
     };
-    return `<div class="card"><div class="ch"><h3>${title}</h3><input class="q" placeholder="Cari…">${o.extra || ''}<button class="btn" data-a="export" data-t="${t}" title="Export ke Excel">⬇ Excel</button>${o.ro ? '' : `<button class="btn p" data-a="add" data-t="${t}" data-def='${JSON.stringify(o.def || {})}'>＋ Tambah</button>`}</div><div class="tw"><table><thead><tr>${cols.map(c => `<th>${c.l}</th>`).join('')}${o.ro ? '' : '<th></th>'}</tr></thead><tbody>${rows.map(r => `<tr>${cols.map(c => `<td>${cell(r, c)}</td>`).join('')}${o.ro ? '' : `<td class="ac"><button data-a="edit" data-t="${t}" data-id="${r.id}" title="Ubah">✎</button><button data-a="del" data-t="${t}" data-id="${r.id}" title="Hapus">🗑</button></td>`}</tr>`).join('') || '<tr><td colspan="99" class="empty">Belum ada data</td></tr>'}</tbody></table></div></div>`;
+    return `<div class="card"><div class="ch"><h3>${title}</h3><input class="q" placeholder="Cari…">${ro ? '' : (o.extra || '')}<button class="btn" data-a="export" data-t="${t}" title="Export ke Excel">⬇ Excel</button>${ro ? '' : `<button class="btn p" data-a="add" data-t="${t}" data-def='${JSON.stringify(o.def || {})}'>＋ Tambah</button>`}</div><div class="tw"><table><thead><tr>${cols.map(c => `<th>${c.l}</th>`).join('')}${ro ? '' : '<th></th>'}</tr></thead><tbody>${rows.map(r => `<tr>${cols.map(c => `<td>${cell(r, c)}</td>`).join('')}${ro ? '' : `<td class="ac"><button data-a="edit" data-t="${t}" data-id="${r.id}" title="Ubah">✎</button><button data-a="del" data-t="${t}" data-id="${r.id}" title="Hapus">🗑</button></td>`}</tr>`).join('') || '<tr><td colspan="99" class="empty">Belum ada data</td></tr>'}</tbody></table></div></div>`;
 }
 const PAL = ['#4f46e5', '#06b6d4', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
 Chart.register(ChartDataLabels);
@@ -226,11 +230,11 @@ function admAll() {
         return ''; return c.ty == 'b' ? bd(v) : c.ty == 'd' ? fd(v) : esc(v); };
     return `<div class="card"><div class="ch"><h3>Semua Karyawan (Tetap · Kontrak · PHL)</h3><input class="q" placeholder="Cari…">
   <select id="admSortSel" class="btn">${opt('nama', 'Urutkan: Nama (A-Z)')}${opt('status', 'Urutkan: Status')}${opt('tipe', 'Urutkan: Tipe')}${opt('departemen', 'Urutkan: Departemen')}${opt('tgl_masuk', 'Urutkan: Tgl Masuk (terbaru)')}</select>
-  <label class="btn p imp" title="Impor daftar karyawan dari file Excel">⬆ Impor Excel<input type="file" id="impFile" accept=".xlsx,.xls,.csv" hidden></label>
-  <button class="btn" data-a="tpl" data-t="karyawan" title="Unduh template Excel untuk impor">⬇ Template</button>
+  ${ADMIN ? `<label class="btn p imp" title="Impor daftar karyawan dari file Excel">⬆ Impor Excel<input type="file" id="impFile" accept=".xlsx,.xls,.csv" hidden></label>
+  <button class="btn" data-a="tpl" data-t="karyawan" title="Unduh template Excel untuk impor">⬇ Template</button>` : ''}
   <button class="btn" data-a="export" data-t="semua_karyawan">⬇ Export Excel</button>
-  <button class="btn p" data-a="add" data-t="karyawan" data-def='{"status":"Aktif"}'>＋ Tambah</button></div>
-  <div class="tw"><table><thead><tr>${cols.map(c => `<th>${c.l}</th>`).join('')}<th></th></tr></thead><tbody>${rows.map(r => `<tr>${cols.map(c => `<td>${cell(r, c)}</td>`).join('')}<td class="ac"><button data-a="edit" data-t="karyawan" data-id="${r.id}" title="Ubah">✎</button><button data-a="del" data-t="karyawan" data-id="${r.id}" title="Hapus">🗑</button></td></tr>`).join('') || '<tr><td colspan="99" class="empty">Belum ada data</td></tr>'}</tbody></table></div></div>`;
+  ${ADMIN ? '<button class="btn p" data-a="add" data-t="karyawan" data-def=\'{"status":"Aktif"}\'>＋ Tambah</button>' : ''}</div>
+  <div class="tw"><table><thead><tr>${cols.map(c => `<th>${c.l}</th>`).join('')}${ADMIN ? '<th></th>' : ''}</tr></thead><tbody>${rows.map(r => `<tr>${cols.map(c => `<td>${cell(r, c)}</td>`).join('')}${ADMIN ? `<td class="ac"><button data-a="edit" data-t="karyawan" data-id="${r.id}" title="Ubah">✎</button><button data-a="del" data-t="karyawan" data-id="${r.id}" title="Hapus">🗑</button></td>` : ''}</tr>`).join('') || '<tr><td colspan="99" class="empty">Belum ada data</td></tr>'}</tbody></table></div></div>`;
 }
 export function exportTable(card, filename) {
     const table = $('table', card);
@@ -440,7 +444,7 @@ export const P = {
         tbl('cuti', 'B. Rekapan Cuti Karyawan', ['tgl_pengajuan', 'nik', nama, 'jenis_cuti', 'mulai', 'selesai', { l: 'Hari Kerja', c: r => r.mulai && r.selesai ? netdays(r.mulai, r.selesai) : '' }, 'status', 'keterangan']),
     dinas: () => head('Operasional Dinas', 'Surat Perjalanan Dinas (SPD) dan Surat Upah Perjalanan Dinas (honor).') +
         kpis([kpi('SPD berjalan', X.spdJalan), kpi('SPD tahun ini', X.spdTahun, '', 1), kpi('SPD bulan ini', X.spdBulan, '', 2), kpi('Honor belum diajukan', rp(X.h0), '', 3), kpi('Honor diajukan', rp(X.h1), '', 4), kpi('Honor dibayar', rp(X.h2), '', 5)]) +
-        tbl('spd', 'A. Surat Perjalanan Dinas (SPD) — Keluar Kota', ['no_surat', 'tgl_surat', 'nik', nama, { l: 'Tipe', c: r => tp(r.nik) }, 'kota', 'berangkat', 'kembali', { l: 'Durasi (hari)', c: r => dur(r.berangkat, r.kembali) }, 'keperluan']) +
+        tbl('spd', 'A. Surat Perjalanan Dinas (SPD) — Keluar Kota', ['no_surat', 'tgl_surat', 'nik', nama, 'kota', 'berangkat', 'kembali', { l: 'Durasi (hari)', c: r => dur(r.berangkat, r.kembali) }, 'keperluan']) +
         `<div class="g w">${tbl('honor', 'B. Surat Upah Perjalanan Dinas (Honor)', ['no_spd', { l: 'Nama', c: r => nm((DB.spd.find(s => s.no_surat == r.no_spd) || {}).nik) }, { l: 'Nominal', ty: 'n', rp: 1, c: r => r.nominal }, 'tgl_pengajuan', 'status', 'tgl_dibayar', 'keterangan'])}${G.honor()}</div>`,
     tugas: () => {
         const tg = [...new Set(DB.lembur.map(r => r.tanggal))].sort(), kn = [...new Set(DB.lembur.map(r => r.nik))];

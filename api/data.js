@@ -13,13 +13,17 @@ async function columnsOf(table) {
 }
 
 export default async function handler(req, res) {
-  const session = requireLogin(req, res);
-  if (!session) return; // requireLogin sudah mengirim 401
+  const m = req.method;
+  // Baca data (GET) boleh diakses siapa saja (mode pengunjung / read-only di dashboard).
+  // Tambah/ubah/hapus (POST & DELETE) tetap wajib login sebagai admin.
+  if (m !== 'GET') {
+    const session = requireLogin(req, res);
+    if (!session) return; // requireLogin sudah mengirim 401
+  }
 
   try {
     const t = String(req.query.t || '');
     const id = parseInt(req.query.id, 10) || 0;
-    const m = req.method;
 
     if (t === 'all') {
       const out = {};

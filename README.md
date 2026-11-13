@@ -15,6 +15,19 @@ gratis di **Vercel**. Vercel tidak menjalankan PHP, jadi:
 **Semua rumus, label, dan tampilan dashboard TIDAK diubah** — hanya cara
 hosting & penyimpanan datanya yang berubah supaya kompatibel dengan Vercel.
 
+## Mode pengunjung & mode admin
+
+Sejak revisi ini, dashboard **langsung tampil ke siapa saja** yang membuka
+link-nya, dalam mode **read-only** (tidak ada tombol Tambah/Ubah/Hapus/Impor).
+Di pojok kanan atas header ada tombol **🔑 Login Admin** — setelah login
+dengan akun di tabel `users`, tombol-tombol edit akan muncul dan data bisa
+diubah/dihapus, sampai tombol **🚪 Keluar** ditekan atau sesi login berakhir.
+
+Secara teknis: `api/data.js` sekarang mengizinkan `GET` (baca data) tanpa
+login, tapi `POST`/`DELETE` (tambah/ubah/hapus) tetap wajib login — jadi
+pengunjung tanpa akun tidak bisa mengubah data walau mencoba memanggil API
+secara langsung.
+
 ## 1. Siapkan database PostgreSQL
 
 Pakai salah satu (gratis untuk skala kecil): [Neon](https://neon.tech),
