@@ -13,13 +13,14 @@ import { api } from './api.js';
 export const $ = (s, e = document) => e.querySelector(s);
 export const $$ = (s, e = document) => [...e.querySelectorAll(s)];
 export const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-export const DEPT = ['PPIC', 'Production Assembly', 'General Affairs', 'Finance & Accounting', 'Human Capital', 'Intelegent System Engineering', 'Production Engineering', 'QA & QC', 'Production Fabrication', 'Product Development', 'Design Engineering', 'Procurement', 'Board of Directors (Staff Ahli)', 'Secretary', 'PMO', 'Product Support'];
-export const L = { tipe: ['Tetap', 'Kontrak', 'PHL'], ks: ['Aktif', 'Resign'], jk: ['PKWT', 'PKWTT', 'HARIAN'], mp: ['Diajukan', 'Pending', 'Diterima', 'Ditolak'], lw: ['Open', 'On Progress', 'Closed'], ob: ['Terjadwal', 'Berlangsung', 'Selesai'], cuti: ['Tahunan', 'Sakit', 'Melahirkan', 'Besar', 'Lainnya'], sc: ['Diajukan', 'Disetujui', 'Ditolak'], hon: ['Belum diajukan', 'Diajukan', 'Dibayar'], hl: ['Hari Kerja', 'Sabtu', 'Minggu', 'Hari Libur'], memo: ['Draft', 'Terbit', 'Arsip'], kat: ['Ringan', 'Sedang', 'Berat'], sp: ['SP1', 'SP2', 'SP3'] };
+export const DEPT = ['PPIC', 'Production Assembly', 'General Affairs', 'Finance & Accounting', 'Human Capital', 'Intelegent System Engineering', 'Production Engineering', 'QA & QC', 'Production Fabrication', 'Product Development', 'Design Engineering', 'Procurement', 'Board of Directors (Staff Ahli)', 'Secretary', 'PMO', 'Product Support', 'Office Boy', 'Driver'];
+export const PERUSAHAAN = ['PT Amsa', 'PT Jala'];
+export const L = { tipe: ['Tetap', 'Kontrak', 'PHL'], ks: ['Aktif', 'Resign'], jk: ['PKWT', 'PKWTT', 'HARIAN'], mp: ['Diajukan', 'Pending', 'Diterima', 'Ditolak'], lw: ['Open', 'On Progress', 'Closed'], ob: ['Terjadwal', 'Berlangsung', 'Selesai'], cuti: ['Tahunan', 'Sakit', 'Melahirkan', 'Besar', 'Lainnya'], sc: ['Diajukan', 'Disetujui', 'Ditolak'], hon: ['Belum diajukan', 'Diajukan', 'Dibayar'], hl: ['Hari Kerja', 'Sabtu', 'Minggu', 'Hari Libur'], memo: ['Draft', 'Terbit', 'Arsip'], kat: ['Ringan', 'Sedang', 'Berat'], sp: ['SP1', 'SP2', 'SP3'], gender: ['Laki-laki', 'Perempuan'], pendidikan: ['SMP', 'SMA/SMK', 'D3', 'S1', 'S2', 'S3'] };
 // ---------- definisi field form (k=kolom DB, l=label, ty: t teks, n angka, d tanggal, m jam, s pilihan, b pilihan+badge, k pilih karyawan)
 const F = (k, l, ty = 't', o) => ({ k, l, ty, o });
 export const T = {
     pengaturan: [F('kunci', 'Pengaturan'), F('nilai', 'Nilai')],
-    karyawan: [F('nik', 'NIK'), F('nama', 'Nama Lengkap'), F('departemen', 'Departemen', 's', DEPT), F('tipe', 'Tipe', 's', L.tipe), F('tgl_masuk', 'Tanggal Masuk', 'd'), F('tgl_resign', 'Tanggal Resign', 'd'), F('status', 'Status', 'b', L.ks), F('jabatan', 'Jabatan'), F('alasan_resign', 'Alasan Resign'), F('no_kontrak', 'No. Kontrak'), F('jenis_kontrak', 'Jenis Kontrak', 's', L.jk), F('mulai_kontrak', 'Mulai Kontrak', 'd'), F('berakhir', 'Berakhir', 'd')],
+    karyawan: [F('nik', 'NIK'), F('nama', 'Nama Lengkap'), F('perusahaan', 'Perusahaan', 's', PERUSAHAAN), F('departemen', 'Departemen', 's', DEPT), F('tipe', 'Tipe', 's', L.tipe), F('jenis_kelamin', 'Jenis Kelamin', 's', L.gender), F('tanggal_lahir', 'Tanggal Lahir', 'd'), F('pendidikan', 'Pendidikan Terakhir', 's', L.pendidikan), F('tgl_masuk', 'Tanggal Masuk', 'd'), F('tanggal_tetap', 'Tgl. Tetap (Pegawai Tetap)', 'd'), F('tgl_resign', 'Tanggal Resign', 'd'), F('status', 'Status', 'b', L.ks), F('jabatan', 'Jabatan'), F('alasan_resign', 'Alasan Resign'), F('no_kontrak', 'No. Kontrak'), F('jenis_kontrak', 'Jenis Kontrak', 's', L.jk), F('mulai_kontrak', 'Mulai Kontrak', 'd'), F('berakhir', 'Berakhir', 'd')],
     manpower: [F('no_pengajuan', 'No. Pengajuan'), F('tgl_pengajuan', 'Tgl Pengajuan', 'd'), F('departemen', 'Departemen', 's', DEPT), F('posisi', 'Posisi'), F('jumlah', 'Jumlah Orang', 'n'), F('alasan', 'Alasan'), F('pemohon', 'Pemohon'), F('status', 'Status', 'b', L.mp), F('tgl_keputusan', 'Tgl Keputusan', 'd')],
     lowongan: [F('posisi', 'Posisi'), F('departemen', 'Departemen', 's', DEPT), F('tgl_buka', 'Tanggal Buka', 'd'), F('kebutuhan', 'Kebutuhan', 'n'), F('pelamar', 'Jumlah Pelamar', 'n'), F('diterima', 'Diterima', 'n'), F('status', 'Status', 'b', L.lw), F('target_selesai', 'Target Selesai', 'd')],
     funnel: [F('tahap', 'Tahap'), F('jumlah', 'Jumlah', 'n')],
@@ -67,6 +68,14 @@ export const spx = r => { if (!r.tgl_terbit || !r.masa_berlaku)
     return { b: '', s: '', st: '' }; const b = addM(r.tgl_terbit, +r.masa_berlaku), s = dd(b, SEL); return { b, s, st: s < 0 ? 'Kadaluarsa' : 'Berlaku' }; };
 export const bl = b => MON[+b.slice(5, 7) - 1] + ' ' + b.slice(0, 4), resM = b => cnt(DB.karyawan, k => k.tgl_resign && k.tgl_resign.slice(0, 7) == b.slice(0, 7));
 export const pct = r => r.hari_kerja ? Math.round(r.masuk / (X.basis * r.hari_kerja) * 1000) / 10 : 0;
+// usia dihitung otomatis dari tanggal lahir ke tanggal hari ini (bukan ke tanggal terpilih di dashboard)
+export const usia = tl => { if (!tl)
+    return ''; const b = D(tl), n = new Date(); let a = n.getFullYear() - b.getFullYear(); if (n.getMonth() < b.getMonth() || (n.getMonth() == b.getMonth() && n.getDate() < b.getDate()))
+    a--; return a >= 0 ? a : ''; };
+function admStats(co) {
+    const K = DB.karyawan.filter(k => !co || k.perusahaan == co), ak = K.filter(k => k.status == 'Aktif');
+    return { Tetap: cnt(ak, k => k.tipe == 'Tetap'), Kontrak: cnt(ak, k => k.tipe == 'Kontrak'), PHL: cnt(ak, k => k.tipe == 'PHL'), aktif: ak.length, resign: cnt(K, k => k.status == 'Resign'), segera: cnt(K, k => k.tipe == 'Kontrak' && kst(k) == 'Segera Berakhir') };
+}
 // ---------- perhitungan angka (setara rumus Excel)
 export function S() {
     const K = DB.karyawan, ak = K.filter(k => k.status == 'Aktif'), y = SEL.slice(0, 4), ym = SEL.slice(0, 7), yr = d => d && d.slice(0, 4) == y, mo = d => d && d.slice(0, 7) == ym, s = { y };
@@ -74,6 +83,8 @@ export function S() {
     L.tipe.forEach(t => s[t] = cnt(ak, k => k.tipe == t));
     s.resign = cnt(K, k => k.status == 'Resign');
     s.segera = cnt(K, k => k.tipe == 'Kontrak' && kst(k) == 'Segera Berakhir');
+    s.amsa = admStats('PT Amsa');
+    s.jala = admStats('PT Jala');
     s.mpOk = cnt(DB.manpower, r => r.status == 'Diterima');
     s.lw = cnt(DB.lowongan, r => r.status == 'Open' || r.status == 'On Progress');
     s.pel = sum(DB.lowongan, 'pelamar');
@@ -93,10 +104,6 @@ export function S() {
     s.spdTahun = cnt(DB.spd, r => yr(r.tgl_surat) && r.tgl_surat <= SEL);
     s.spdBulan = cnt(DB.spd, r => mo(r.tgl_surat) && r.tgl_surat <= SEL);
     L.hon.forEach((h, i) => s['h' + i] = sum(DB.honor.filter(r => r.status == h), 'nominal'));
-    s.sl = DB.lembur.length;
-    s.jam = Math.round(sum(DB.lembur, jam) * 100) / 100;
-    s.jamB = Math.round(sum(DB.lembur.filter(r => lst(r.tanggal) == 'Belum diajukan'), jam) * 100) / 100;
-    s.jamS = Math.round((s.jam - s.jamB) * 100) / 100;
     s.st = DB.surat_tugas.length;
     s.stAktif = cnt(DB.surat_tugas, r => r.mulai <= SEL && r.selesai >= SEL);
     s.memo = DB.memo.length;
@@ -204,16 +211,21 @@ export const G = {
     mp: () => chart('Status Pengajuan Manpower', 'doughnut', L.mp, [{ data: cnts(DB.manpower, 'status', L.mp) }]),
     add: () => chart('Penambahan Karyawan per Bulan', 'bar', MON, [{ label: 'Penambahan', data: MON.map((_, i) => cnt(DB.karyawan, k => k.tgl_masuk && k.tgl_masuk.slice(0, 7) == X.y + '-' + String(i + 1).padStart(2, '0'))) }]),
     hadir: () => chart('Persentase Kehadiran per Bulan (%)', 'bar', DB.kehadiran.map(r => bl(r.bulan)), [{ label: '% Hadir', data: DB.kehadiran.map(pct) }]),
+    // grafik baru: Izin/Sakit, Cuti, dan Dinas Luar Kota per bulan (menggantikan tabel Rekapan Cuti Karyawan)
+    kehadiranRinci: () => chart('Izin/Sakit, Cuti, dan Dinas Luar Kota per Bulan (Orang-Hari)', 'bar', DB.kehadiran.map(r => bl(r.bulan)), [
+        { label: 'Izin/Sakit', data: DB.kehadiran.map(r => +r.izin_sakit || 0) },
+        { label: 'Cuti', data: DB.kehadiran.map(r => +r.cuti || 0) },
+        { label: 'Dinas Luar Kota', data: DB.kehadiran.map(r => +r.dinas || 0) }
+    ]),
     honor: () => chart('Total Honor per Status (Rp)', 'bar', L.hon, [{ label: 'Rp', data: L.hon.map((_, i) => X['h' + i]) }]),
-    lemS: () => chart('Jam Lembur per Status', 'doughnut', L.hon, [{ data: L.hon.map(h => Math.round(sum(DB.lembur.filter(r => lst(r.tanggal) == h), jam) * 100) / 100) }]),
-    lemT: () => { const t = [...new Set(DB.lembur.map(r => r.tanggal))].sort(); return chart('Jam Lembur per Tanggal', 'bar', t.map(fd), [{ label: 'Jam', data: t.map(x => sum(DB.lembur.filter(r => r.tanggal == x), jam)) }]); },
     memo: () => chart('Status Memo', 'doughnut', L.memo, [{ data: cnts(DB.memo, 'status', L.memo) }]),
     sp: () => chart('Status SP', 'doughnut', ['Berlaku', 'Kadaluarsa'], [{ data: [X.spOk, X.spEx] }]),
     plg: () => chart('Pelanggaran per Kategori', 'bar', L.kat, [{ label: 'Jumlah', data: cnts(DB.pelanggaran, 'kategori', L.kat) }])
 };
-const adm = t => tbl('karyawan', 'Karyawan ' + t, ['nik', 'nama', 'departemen', 'tgl_masuk', 'tgl_resign', 'status'], { rows: DB.karyawan.filter(k => k.tipe == t), def: { tipe: t, status: 'Aktif' } });
+// kolom tabel Administrasi (per perusahaan): + Jenis Kelamin, Usia (otomatis), Pendidikan Terakhir, Tgl. Tetap
+const adm = (t, co) => tbl('karyawan', 'Karyawan ' + t, ['nik', 'nama', 'departemen', 'jenis_kelamin', { l: 'Usia', c: r => usia(r.tanggal_lahir) }, 'pendidikan', 'tgl_masuk', 'tanggal_tetap', 'tgl_resign', 'status'], { rows: DB.karyawan.filter(k => k.tipe == t && (!co || k.perusahaan == co)), def: { tipe: t, status: 'Aktif', perusahaan: co || '' } });
 const nama = { l: 'Nama', c: r => nm(r.nik) };
-// ---------- daftar gabungan semua jenis karyawan + sort + impor Excel
+// ---------- daftar gabungan semua jenis karyawan (per perusahaan) + sort + impor Excel
 const sv = v => String(v ?? ''), tpIdx = t => { const i = L.tipe.indexOf(t); return i < 0 ? 99 : i; };
 const ADMSORTERS = {
     nama: (a, b) => sv(a.nama).localeCompare(sv(b.nama)),
@@ -222,19 +234,28 @@ const ADMSORTERS = {
     departemen: (a, b) => sv(a.departemen).localeCompare(sv(b.departemen)) || sv(a.nama).localeCompare(sv(b.nama)),
     tgl_masuk: (a, b) => sv(b.tgl_masuk).localeCompare(sv(a.tgl_masuk)) || sv(a.nama).localeCompare(sv(b.nama))
 };
-function admAll() {
-    const rows = [...DB.karyawan].sort(ADMSORTERS[ADMSORT] || ADMSORTERS.nama);
+function admAll(co) {
+    const base = co ? DB.karyawan.filter(k => k.perusahaan == co) : DB.karyawan;
+    const rows = [...base].sort(ADMSORTERS[ADMSORT] || ADMSORTERS.nama);
     const opt = (v, l) => `<option value="${v}"${ADMSORT == v ? ' selected' : ''}>${l}</option>`;
-    const cols = [col('karyawan', 'nik'), col('karyawan', 'nama'), col('karyawan', 'departemen'), col('karyawan', 'tipe'), col('karyawan', 'tgl_masuk'), col('karyawan', 'status'), col('karyawan', 'jabatan')];
+    const cols = [col('karyawan', 'nik'), col('karyawan', 'nama'), col('karyawan', 'departemen'), col('karyawan', 'tipe'), col('karyawan', 'jenis_kelamin'), { l: 'Usia', c: r => usia(r.tanggal_lahir) }, col('karyawan', 'pendidikan'), col('karyawan', 'tgl_masuk'), col('karyawan', 'tanggal_tetap'), col('karyawan', 'status'), col('karyawan', 'jabatan')];
     const cell = (r, c) => { const v = c.c ? c.c(r) : r[c.k]; if (v == null || v === '')
         return ''; return c.ty == 'b' ? bd(v) : c.ty == 'd' ? fd(v) : esc(v); };
-    return `<div class="card"><div class="ch"><h3>Semua Karyawan (Tetap · Kontrak · PHL)</h3><input class="q" placeholder="Cari…">
+    const title = co ? 'Semua Karyawan — ' + co : 'Semua Karyawan (Tetap · Kontrak · PHL)';
+    return `<div class="card"><div class="ch"><h3>${title}</h3><input class="q" placeholder="Cari…">
   <select id="admSortSel" class="btn">${opt('nama', 'Urutkan: Nama (A-Z)')}${opt('status', 'Urutkan: Status')}${opt('tipe', 'Urutkan: Tipe')}${opt('departemen', 'Urutkan: Departemen')}${opt('tgl_masuk', 'Urutkan: Tgl Masuk (terbaru)')}</select>
   ${ADMIN ? `<label class="btn p imp" title="Impor daftar karyawan dari file Excel">⬆ Impor Excel<input type="file" id="impFile" accept=".xlsx,.xls,.csv" hidden></label>
   <button class="btn" data-a="tpl" data-t="karyawan" title="Unduh template Excel untuk impor">⬇ Template</button>` : ''}
-  <button class="btn" data-a="export" data-t="semua_karyawan">⬇ Export Excel</button>
-  ${ADMIN ? '<button class="btn p" data-a="add" data-t="karyawan" data-def=\'{"status":"Aktif"}\'>＋ Tambah</button>' : ''}</div>
+  <button class="btn" data-a="export" data-t="${co ? 'karyawan_' + co.replace(/\s+/g, '_') : 'semua_karyawan'}">⬇ Export Excel</button>
+  ${ADMIN ? `<button class="btn p" data-a="add" data-t="karyawan" data-def='${JSON.stringify({ status: 'Aktif', perusahaan: co || '' })}'>＋ Tambah</button>` : ''}</div>
   <div class="tw"><table><thead><tr>${cols.map(c => `<th>${c.l}</th>`).join('')}${ADMIN ? '<th></th>' : ''}</tr></thead><tbody>${rows.map(r => `<tr>${cols.map(c => `<td>${cell(r, c)}</td>`).join('')}${ADMIN ? `<td class="ac"><button data-a="edit" data-t="karyawan" data-id="${r.id}" title="Ubah">✎</button><button data-a="del" data-t="karyawan" data-id="${r.id}" title="Hapus">🗑</button></td>` : ''}</tr>`).join('') || '<tr><td colspan="99" class="empty">Belum ada data</td></tr>'}</tbody></table></div></div>`;
+}
+// isi halaman Administrasi per perusahaan (PT Amsa / PT Jala)
+function admPageBody(co) {
+    const st = co == 'PT Jala' ? X.jala : X.amsa;
+    return head('Karyawan ' + co, 'Daftar karyawan Tetap, Kontrak, dan PHL untuk ' + co + ' (termasuk trainee).') +
+        kpis([kpi('Karyawan tetap', st.Tetap), kpi('Karyawan kontrak', st.Kontrak, '', 1), kpi('PHL', st.PHL, '', 2), kpi('Total aktif', st.aktif, '', 3), kpi('Resign (total)', st.resign, '', 4), kpi('Kontrak segera berakhir', st.segera, 'Sisa ≤ 30 hari', 5)]) +
+        `<div class="g w">${adm('Tetap', co)}${adm('Kontrak', co)}${adm('PHL', co)}</div>` + admAll(co);
 }
 export function exportTable(card, filename) {
     const table = $('table', card);
@@ -279,9 +300,14 @@ function xlVal2date(v) {
 const ALIAS = {
     nik: ['nik', 'nomorindukkaryawan', 'noinduk', 'idkaryawan'],
     nama: ['nama', 'namalengkap', 'namakaryawan'],
+    perusahaan: ['perusahaan', 'pt', 'company', 'namaperusahaan'],
     departemen: ['departemen', 'dept', 'department', 'divisi', 'bagian'],
     tipe: ['tipe', 'tipekaryawan', 'jeniskaryawan'],
+    jenis_kelamin: ['jeniskelamin', 'gender', 'jk'],
+    tanggal_lahir: ['tanggallahir', 'tgllahir', 'dob'],
+    pendidikan: ['pendidikan', 'pendidikanterakhir', 'education'],
     tgl_masuk: ['tanggalmasuk', 'tglmasuk', 'tglbergabung', 'tanggalbergabung', 'joindate'],
+    tanggal_tetap: ['tanggaltetap', 'tgltetap', 'tanggalpegawaitetap', 'tglmenjaditetap'],
     tgl_resign: ['tanggalresign', 'tglresign'],
     status: ['status', 'statuskaryawan'],
     jabatan: ['jabatan', 'posisi'],
@@ -305,15 +331,18 @@ const normDept = v => { const t = sv(v).trim(); return t ? (DEPT.find(d => d.toL
 const normTipe = v => { const t = sv(v).toLowerCase(); return /tetap|permanent/.test(t) ? 'Tetap' : /kontrak|contract|pkwt/.test(t) ? 'Kontrak' : /phl|harian|lepas|magang|trainee/.test(t) ? 'PHL' : ''; };
 const normStatus = v => { const t = sv(v).toLowerCase(); return /resign|keluar|non ?aktif/.test(t) ? 'Resign' : /aktif|active/.test(t) ? 'Aktif' : ''; };
 const normJK = v => { const t = sv(v).trim().toUpperCase(); return t; };
+const normGender = v => { const t = sv(v).trim().toLowerCase(); return /^l|laki|pria|male/.test(t) ? 'Laki-laki' : /^p|perempuan|wanita|female/.test(t) ? 'Perempuan' : ''; };
+const normPendidikan = v => { const t = sv(v).trim().toUpperCase().replace(/\s+/g, ''); const m = { SMP: 'SMP', SMA: 'SMA/SMK', SMK: 'SMA/SMK', 'SMA/SMK': 'SMA/SMK', D3: 'D3', S1: 'S1', S2: 'S2', S3: 'S3' }; return m[t] || ''; };
+const normPerusahaan = v => { const t = sv(v).trim().toLowerCase(); return /amsa/.test(t) ? 'PT Amsa' : /jala/.test(t) ? 'PT Jala' : ''; };
 export function downloadTemplate(kind) {
     const aoa = kind == 'kontrak'
         ? [['NIK', 'Nama', 'Departemen', 'Jabatan', 'No. Kontrak', 'Jenis Kontrak', 'Mulai Kontrak', 'Berakhir'], ['EMP101', 'Contoh Nama', 'General Affairs', 'Staff GA', 'KK/HC/2026/010', 'PKWT', '2026-01-01', '2026-12-31']]
-        : [['NIK', 'Nama', 'Departemen', 'Tipe', 'Tanggal Masuk', 'Tanggal Resign', 'Status', 'Jabatan', 'Alasan Resign'], ['EMP101', 'Contoh Nama', 'General Affairs', 'Kontrak', '2026-01-01', '', 'Aktif', 'Staff GA', '']];
+        : [['NIK', 'Nama', 'Perusahaan', 'Departemen', 'Tipe', 'Jenis Kelamin', 'Tanggal Lahir', 'Pendidikan Terakhir', 'Tanggal Masuk', 'Tanggal Tetap', 'Tanggal Resign', 'Status', 'Jabatan', 'Alasan Resign'], ['EMP101', 'Contoh Nama', 'PT Amsa', 'General Affairs', 'Kontrak', 'Laki-laki', '1995-06-15', 'S1', '2026-01-01', '', '', 'Aktif', 'Staff GA', '']];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'Data');
     XLSX.writeFile(wb, kind == 'kontrak' ? 'template_kontrak_kerja.xlsx' : 'template_karyawan.xlsx');
 }
-// mode: 'karyawan' (daftar karyawan) | 'kontrak' (Kontrak Kerja di Employee Relations)
+// mode: 'karyawan' (daftar karyawan) | 'kontrak' (impor pembaruan data kontrak lama — tidak lagi dipakai tombol UI manapun, dibiarkan untuk kompatibilitas)
 // NIK sudah ada -> data DIPERBARUI, NIK baru -> DITAMBAHKAN. Mengembalikan ringkasan, atau null bila dibatalkan.
 export async function importKaryawan(file, mode = 'karyawan') {
     const buf = await file.arrayBuffer(), wb = XLSX.read(buf, { type: 'array' }), ws = wb.Sheets[wb.SheetNames[0]], raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
@@ -356,8 +385,13 @@ export async function importKaryawan(file, mode = 'karyawan') {
         const set = (k, v) => { if (v !== '' && v != null)
             p[k] = v; };
         set('nama', sv(r.nama).trim());
+        set('perusahaan', normPerusahaan(r.perusahaan));
         set('departemen', normDept(r.departemen));
         set('jabatan', sv(r.jabatan).trim());
+        set('jenis_kelamin', normGender(r.jenis_kelamin));
+        set('pendidikan', normPendidikan(r.pendidikan));
+        set('tanggal_lahir', xlVal2date(r.tanggal_lahir));
+        set('tanggal_tetap', xlVal2date(r.tanggal_tetap));
         set('tgl_masuk', xlVal2date(r.tgl_masuk));
         set('tgl_resign', xlVal2date(r.tgl_resign));
         set('alasan_resign', sv(r.alasan_resign).trim());
@@ -394,14 +428,15 @@ export async function importKaryawan(file, mode = 'karyawan') {
 export const importSummary = r => `Impor selesai.\n• Ditambahkan: ${r.baru}\n• Diperbarui: ${r.update}\n• Gagal/dilewati: ${r.errors.length}` + (r.errors.length ? '\n\n' + r.errors.slice(0, 8).join('\n') + (r.errors.length > 8 ? `\n… dan ${r.errors.length - 8} lainnya` : '') : '');
 // ---------- notifikasi
 export function notifList() {
-    if (!DB.karyawan) return []; // data belum selesai dimuat dari server — jangan hitung dulu
+    if (!DB.karyawan)
+        return []; // data belum selesai dimuat dari server — jangan hitung dulu
     const n = [];
     DB.karyawan.filter(k => k.tipe == 'Kontrak').forEach(k => {
-        const st = kst(k);
+        const st = kst(k), href = '#/' + (k.perusahaan == 'PT Jala' ? 'administrasi_jala' : 'administrasi_amsa');
         if (st == 'Segera Berakhir')
-            n.push({ level: 'wa', text: `Kontrak ${k.nama} (${k.departemen}) berakhir ${dd(k.berakhir, SEL)} hari lagi — ${fd(k.berakhir)}`, href: '#/administrasi' });
+            n.push({ level: 'wa', text: `Kontrak ${k.nama} (${k.departemen}) berakhir ${dd(k.berakhir, SEL)} hari lagi — ${fd(k.berakhir)}`, href });
         else if (st == 'Berakhir')
-            n.push({ level: 'er', text: `Kontrak ${k.nama} (${k.departemen}) sudah berakhir sejak ${fd(k.berakhir)}, segera perbarui`, href: '#/er' });
+            n.push({ level: 'er', text: `Kontrak ${k.nama} (${k.departemen}) sudah berakhir sejak ${fd(k.berakhir)}, segera perbarui`, href });
     });
     DB.sp.forEach(r => { const x = spx(r); if (x.st == 'Berlaku' && x.s <= 7)
         n.push({ level: 'wa', text: `${r.jenis_sp} a.n. ${nm(r.nik)} akan kadaluarsa ${x.s} hari lagi`, href: '#/er' }); });
@@ -410,12 +445,6 @@ export function notifList() {
     const mpW = cnt(DB.manpower, r => r.status == 'Diajukan');
     if (mpW)
         n.push({ level: 'in', text: `${mpW} pengajuan manpower menunggu persetujuan`, href: '#/recruitment' });
-    const ctW = cnt(DB.cuti, r => r.status == 'Diajukan');
-    if (ctW)
-        n.push({ level: 'in', text: `${ctW} pengajuan cuti menunggu persetujuan`, href: '#/hc' });
-    const lmW = cnt(DB.lembur, r => lst(r.tanggal) == 'Belum diajukan');
-    if (lmW)
-        n.push({ level: 'in', text: `${lmW} entri lembur belum diajukan pembayarannya`, href: '#/tugas' });
     const ord = { er: 0, wa: 1, in: 2 };
     n.sort((a, b) => ord[a.level] - ord[b.level]);
     return n;
@@ -425,10 +454,11 @@ export const P = {
     dashboard: () => head('Dashboard Human Capital', 'Ringkasan seluruh halaman. Seluruh angka dan grafik terhubung otomatis ke database dan mengikuti tanggal terpilih.') +
         kpis([kpi('Karyawan aktif', X.aktif, 'Tetap + kontrak + PHL'), kpi('Lowongan aktif', X.lw, 'Open & On Progress', 1), kpi('Kehadiran (periode)', (X.hadir * 100).toFixed(1) + '%', 'Masuk ÷ (basis × hari kerja)', 3), kpi('SPD berjalan', X.spdJalan, 'Surat dinas aktif', 2), kpi('SP berlaku', X.spOk, 'Masih dalam masa berlaku', 4), kpi('Memo draft', X.draft, 'Belum diterbitkan', 5)]) +
         sec('Recruitment', 'recruitment', kpis([kpi('Manpower diterima', X.mpOk), kpi('Lowongan aktif', X.lw, '', 1), kpi('Total pelamar', X.pel, '', 2), kpi('Kandidat diproses', X.proses, '', 3), kpi('Kandidat diterima', X.fnOk, '', 4), kpi('Onboarding (thn ini)', X.onb, '', 5)]) + `<div class="g">${G.funnel()}${G.mp()}${G.add()}</div>`) +
-        sec('Operasional HC (Kehadiran & Cuti)', 'hc', kpis([kpi('Rata-rata kehadiran', (X.hadir * 100).toFixed(1) + '%'), kpi('Karyawan masuk', nf(X.masuk), 'orang-hari', 1), kpi('Izin / sakit', nf(X.izin), 'orang-hari', 2), kpi('Cuti', nf(X.cuti), 'orang-hari', 3), kpi('Dinas luar kota', nf(X.dinas), 'orang-hari', 4), kpi('Resign (periode)', X.resignP, '', 5)]) + `<div class="g">${G.hadir()}</div>`) +
-        sec('Operasional Dinas', 'dinas', kpis([kpi('SPD berjalan', X.spdJalan), kpi('SPD tahun ini', X.spdTahun, '', 1), kpi('SPD bulan ini', X.spdBulan, '', 2), kpi('Honor belum diajukan', rp(X.h0), '', 3), kpi('Honor diajukan', rp(X.h1), '', 4), kpi('Honor dibayar', rp(X.h2), '', 5)]) + `<div class="g">${G.honor()}</div>`) +
-        sec('Operasional Tugas', 'tugas', kpis([kpi('Total surat lembur', X.sl), kpi('Total jam lembur', X.jam, '', 1), kpi('Belum diajukan (jam)', X.jamB, '', 2), kpi('Sudah diajukan (jam)', X.jamS, '', 3), kpi('Surat tugas (total)', X.st, 'Area Jabodetabek', 4), kpi('Surat tugas aktif', X.stAktif, 'Berjalan hari ini', 5)]) + `<div class="g">${G.lemS()}${G.lemT()}</div>`) +
-        sec('Administrasi', 'administrasi', kpis([kpi('Karyawan tetap', X.Tetap), kpi('Karyawan kontrak', X.Kontrak, '', 1), kpi('PHL', X.PHL, '', 2), kpi('Total aktif', X.aktif, '', 3), kpi('Resign (total)', X.resign, '', 4), kpi('Kontrak segera berakhir', X.segera, 'Sisa ≤ 30 hari', 5)]) + `${G.headBlock()}`) +
+        sec('Operasional HC (Kehadiran & Cuti)', 'hc', kpis([kpi('Rata-rata kehadiran', (X.hadir * 100).toFixed(1) + '%'), kpi('Karyawan masuk', nf(X.masuk), 'orang-hari', 1), kpi('Izin / sakit', nf(X.izin), 'orang-hari', 2), kpi('Cuti', nf(X.cuti), 'orang-hari', 3), kpi('Dinas luar kota', nf(X.dinas), 'orang-hari', 4), kpi('Resign (periode)', X.resignP, '', 5)]) + `<div class="g">${G.hadir()}${G.kehadiranRinci()}</div>`) +
+        sec('Operasional Dinas dan Tugas', 'dinas', kpis([kpi('SPD berjalan', X.spdJalan), kpi('SPD tahun ini', X.spdTahun, '', 1), kpi('SPD bulan ini', X.spdBulan, '', 2), kpi('Surat tugas (total)', X.st, '', 3), kpi('Surat tugas aktif', X.stAktif, '', 4), kpi('Honor dibayar', rp(X.h2), '', 5)]) + `<div class="g">${G.honor()}</div>`) +
+        sec('Administrasi — PT Amsa', 'administrasi_amsa', kpis([kpi('Karyawan tetap', X.amsa.Tetap), kpi('Karyawan kontrak', X.amsa.Kontrak, '', 1), kpi('PHL', X.amsa.PHL, '', 2), kpi('Total aktif', X.amsa.aktif, '', 3), kpi('Resign (total)', X.amsa.resign, '', 4), kpi('Kontrak segera berakhir', X.amsa.segera, 'Sisa ≤ 30 hari', 5)])) +
+        sec('Administrasi — PT Jala', 'administrasi_jala', kpis([kpi('Karyawan tetap', X.jala.Tetap), kpi('Karyawan kontrak', X.jala.Kontrak, '', 1), kpi('PHL', X.jala.PHL, '', 2), kpi('Total aktif', X.jala.aktif, '', 3), kpi('Resign (total)', X.jala.resign, '', 4), kpi('Kontrak segera berakhir', X.jala.segera, 'Sisa ≤ 30 hari', 5)])) +
+        `<div class="sh"><h2>Headcount Aktif per Departemen</h2></div>${G.headBlock()}` +
         sec('Administrasi Memo', 'memo', kpis([kpi('Total memo', X.memo), kpi('Memo terbit', X.terbit, '', 3), kpi('Memo draft', X.draft, '', 2), kpi('Memo bulan ini', X.memoB, '', 1)]) + `<div class="g">${G.memo()}</div>`) +
         sec('Employee Relations', 'er', kpis([kpi('Pelanggaran (thn ini)', X.plgY), kpi('Pelanggaran berat', X.Berat, '', 4), kpi('SP berlaku', X.spOk, '', 2), kpi('SP kadaluarsa', X.spEx, '', 5), kpi('Pelanggaran ringan', X.Ringan, '', 1), kpi('Pelanggaran sedang', X.Sedang, '', 3)]) + `<div class="g">${G.sp()}${G.plg()}</div>`),
     recruitment: () => head('Recruitment', 'Pengajuan manpower, lowongan aktif, funnel kandidat, onboarding, dan penambahan karyawan.') +
@@ -437,33 +467,24 @@ export const P = {
         tbl('lowongan', 'Lowongan Aktif', ['posisi', 'departemen', 'tgl_buka', 'kebutuhan', 'pelamar', 'diterima', 'status', 'target_selesai', { l: 'Progres Hire', raw: 1, c: r => { const p = r.kebutuhan > 0 ? Math.round(r.diterima / r.kebutuhan * 100) : 0; return `<span class="pb"><i style="width:${p}%"></i></span>${p}%`; } }]) +
         `<div class="g"><div>${tbl('funnel', 'Funnel Kandidat (isi jumlah manual)', ['tahap', 'jumlah'])}</div>${G.funnel()}${G.mp()}</div>` +
         tbl('onboarding', 'Onboarding Karyawan Baru', ['nama', 'posisi', 'divisi', 'tgl_onboarding', 'tgl_mulai', 'pj', 'status', 'keterangan']) + `<div class="g">${G.add()}</div>`,
-    hc: () => head('Operasional HC', 'Rekapan bulanan kehadiran dan rekapan cuti karyawan.') +
+    hc: () => head('Operasional HC', 'Rekapan bulanan kehadiran, izin/sakit, cuti, dan dinas luar kota.') +
         kpis([kpi('Rata-rata kehadiran', (X.hadir * 100).toFixed(1) + '%'), kpi('Karyawan masuk', nf(X.masuk), 'orang-hari', 1), kpi('Izin / sakit', nf(X.izin), '', 2), kpi('Cuti', nf(X.cuti), '', 3), kpi('Dinas luar kota', nf(X.dinas), '', 4), kpi('Resign (periode)', X.resignP, '', 5), kpi('Total hari kerja', X.hari), kpi('Karyawan aktif (basis)', X.basis, 'Ubah di tabel Pengaturan', 1)]) +
-        `<div class="g w">${G.hadir()}${tbl('pengaturan', 'Pengaturan (basis_manual = jumlah karyawan basis; kosongkan nilai untuk otomatis dari data)', ['kunci', 'nilai'])}</div>` +
-        tbl('kehadiran', 'A. Rekapan Bulanan', [{ l: 'Bulan', c: r => bl(r.bulan) }, 'hari_kerja', 'masuk', 'izin_sakit', 'cuti', 'dinas', { l: 'Resign (otomatis)', c: r => resM(r.bulan) }, { l: '% Kehadiran', c: r => pct(r) + '%' }, 'keterangan']) +
-        tbl('cuti', 'B. Rekapan Cuti Karyawan', ['tgl_pengajuan', 'nik', nama, 'jenis_cuti', 'mulai', 'selesai', { l: 'Hari Kerja', c: r => r.mulai && r.selesai ? netdays(r.mulai, r.selesai) : '' }, 'status', 'keterangan']),
-    dinas: () => head('Operasional Dinas', 'Surat Perjalanan Dinas (SPD) dan Surat Upah Perjalanan Dinas (honor).') +
-        kpis([kpi('SPD berjalan', X.spdJalan), kpi('SPD tahun ini', X.spdTahun, '', 1), kpi('SPD bulan ini', X.spdBulan, '', 2), kpi('Honor belum diajukan', rp(X.h0), '', 3), kpi('Honor diajukan', rp(X.h1), '', 4), kpi('Honor dibayar', rp(X.h2), '', 5)]) +
-        tbl('spd', 'A. Surat Perjalanan Dinas (SPD) — Keluar Kota', ['no_surat', 'tgl_surat', 'nik', nama, 'kota', 'berangkat', 'kembali', { l: 'Durasi (hari)', c: r => dur(r.berangkat, r.kembali) }, 'keperluan']) +
-        `<div class="g w">${tbl('honor', 'B. Surat Upah Perjalanan Dinas (Honor)', ['no_spd', { l: 'Nama', c: r => nm((DB.spd.find(s => s.no_surat == r.no_spd) || {}).nik) }, { l: 'Nominal', ty: 'n', rp: 1, c: r => r.nominal }, 'tgl_pengajuan', 'status', 'tgl_dibayar', 'keterangan'])}${G.honor()}</div>`,
-    tugas: () => {
-        const tg = [...new Set(DB.lembur.map(r => r.tanggal))].sort(), kn = [...new Set(DB.lembur.map(r => r.nik))];
-        return head('Operasional Tugas', 'Surat Tugas area Jabodetabek dan pengajuan upah lembur.') +
-            kpis([kpi('Total surat lembur', X.sl), kpi('Total jam lembur', X.jam, '', 1), kpi('Belum diajukan (jam)', X.jamB, '', 2), kpi('Sudah diajukan (jam)', X.jamS, '', 3), kpi('Surat tugas (total)', X.st, '', 4), kpi('Surat tugas aktif', X.stAktif, '', 5)]) +
-            tbl('surat_tugas', 'Surat Tugas (Area Jabodetabek)', ['no_surat', 'tanggal', 'nik', nama, 'tujuan', 'mulai', 'selesai', { l: 'Durasi (hari)', c: r => dur(r.mulai, r.selesai) }]) +
-            tbl('lembur', 'Surat Pengajuan Upah Lembur', ['no_surat', 'tanggal', 'nik', nama, 'jam_mulai', 'jam_selesai', 'hari_lembur', { l: 'Durasi (jam)', c: jam }, { l: 'Status Pengajuan', bd: 1, c: r => lst(r.tanggal) }]) +
-            `<div class="g w">${tbl('lembur_status', 'Status Penggajian per Tanggal Lembur', ['tanggal', { l: 'Jumlah Karyawan', c: r => cnt(DB.lembur, x => x.tanggal == r.tanggal) }, { l: 'Total Jam', c: r => sum(DB.lembur.filter(x => x.tanggal == r.tanggal), jam) }, 'status', 'tgl_pengajuan'])}${tbl('lembur', 'Total Jam Lembur per Karyawan', ['nik', { l: 'Nama', c: r => r.nama }, { l: 'Total Jam', c: r => r.jam }], { ro: 1, rows: kn.map(n => ({ nik: n, nama: nm(n), jam: Math.round(sum(DB.lembur.filter(x => x.nik == n), jam) * 100) / 100 })) })}</div><div class="g">${G.lemS()}${G.lemT()}</div>`;
-    },
-    administrasi: () => head('Administrasi', 'Daftar karyawan Tetap, Kontrak, dan PHL (termasuk trainee).') +
-        kpis([kpi('Karyawan tetap', X.Tetap), kpi('Karyawan kontrak', X.Kontrak, '', 1), kpi('PHL', X.PHL, '', 2), kpi('Total aktif', X.aktif, '', 3), kpi('Resign (total)', X.resign, '', 4), kpi('Kontrak segera berakhir', X.segera, 'Sisa ≤ 30 hari', 5)]) +
-        `<div class="g w">${adm('Tetap')}${adm('Kontrak')}${adm('PHL')}</div>` + admAll() + `${G.headBlock()}`,
+        `<div class="g w">${G.hadir()}${G.kehadiranRinci()}</div>` +
+        `<div class="g w">${tbl('pengaturan', 'Pengaturan (basis_manual = jumlah karyawan basis; kosongkan nilai untuk otomatis dari data)', ['kunci', 'nilai'])}</div>` +
+        tbl('kehadiran', 'Rekapan Bulanan Kehadiran, Izin/Sakit, Cuti, dan Dinas Luar Kota', [{ l: 'Bulan', c: r => bl(r.bulan) }, 'hari_kerja', 'masuk', 'izin_sakit', 'cuti', 'dinas', { l: 'Resign (otomatis)', c: r => resM(r.bulan) }, { l: '% Kehadiran', c: r => pct(r) + '%' }, 'keterangan']),
+    dinas: () => head('Operasional Dinas dan Tugas', 'Surat Tugas, Surat Perjalanan Dinas (SPD), dan Surat Upah Perjalanan Dinas (honor).') +
+        kpis([kpi('SPD berjalan', X.spdJalan), kpi('SPD tahun ini', X.spdTahun, '', 1), kpi('SPD bulan ini', X.spdBulan, '', 2), kpi('Surat tugas (total)', X.st, '', 3), kpi('Surat tugas aktif', X.stAktif, '', 4), kpi('Honor dibayar', rp(X.h2), '', 5)]) +
+        tbl('surat_tugas', 'A. Surat Tugas (Area Jabodetabek)', ['no_surat', 'tanggal', 'nik', nama, 'tujuan', 'mulai', 'selesai', { l: 'Durasi (hari)', c: r => dur(r.mulai, r.selesai) }]) +
+        tbl('spd', 'B. Surat Perjalanan Dinas (SPD) — Keluar Kota', ['no_surat', 'tgl_surat', 'nik', nama, 'kota', 'berangkat', 'kembali', { l: 'Durasi (hari)', c: r => dur(r.berangkat, r.kembali) }, 'keperluan']) +
+        `<div class="g w">${tbl('honor', 'C. Surat Upah Perjalanan Dinas (Honor)', ['no_spd', { l: 'Nama', c: r => nm((DB.spd.find(s => s.no_surat == r.no_spd) || {}).nik) }, { l: 'Nominal', ty: 'n', rp: 1, c: r => r.nominal }, 'tgl_pengajuan', 'status', 'tgl_dibayar', 'keterangan'])}${G.honor()}</div>`,
+    administrasi_amsa: () => admPageBody('PT Amsa'),
+    administrasi_jala: () => admPageBody('PT Jala'),
     memo: () => head('Administrasi Memo', 'Memo internal perusahaan. Ubah status (Draft / Terbit / Arsip) lewat tombol ubah.') +
         kpis([kpi('Total memo', X.memo), kpi('Memo terbit', X.terbit, '', 3), kpi('Memo draft', X.draft, '', 2), kpi('Memo bulan ini', X.memoB, '', 1)]) +
         `<div class="g w">${tbl('memo', 'A. Daftar Memo', ['no_memo', 'tanggal', 'perihal', 'tujuan', 'dari', 'status', 'keterangan'])}${G.memo()}</div>`,
-    er: () => head('Employee Relations', 'Pelanggaran karyawan, surat peringatan (SP), dan kontrak kerja.') +
+    er: () => head('Employee Relations', 'Pelanggaran karyawan dan surat peringatan (SP).') +
         kpis([kpi('Pelanggaran (thn ini)', X.plgY), kpi('Pelanggaran berat', X.Berat, '', 4), kpi('SP berlaku', X.spOk, '', 2), kpi('SP kadaluarsa', X.spEx, '', 5), kpi('Pelanggaran ringan', X.Ringan, '', 1), kpi('Pelanggaran sedang', X.Sedang, '', 3)]) +
         tbl('pelanggaran', 'A. Daftar Pelanggaran', ['no_plg', 'tanggal', 'nik', nama, 'jenis', 'kategori', 'uraian', 'tindak_lanjut']) +
         tbl('sp', 'B. Surat Peringatan (SP)', ['no_sp', 'nik', nama, { l: 'Departemen', c: r => (DB.karyawan.find(k => k.nik == r.nik) || {}).departemen }, 'jenis_sp', 'tgl_terbit', 'masa_berlaku', { l: 'Batas Berlaku', ty: 'd', c: r => spx(r).b }, { l: 'Sisa Hari', c: r => spx(r).s }, { l: 'Status', bd: 1, c: r => spx(r).st }, 'no_pelanggaran']) +
-        `<div class="g">${G.sp()}${G.plg()}</div>` +
-        tbl('karyawan', 'C. Kontrak Kerja', ['nik', 'nama', 'departemen', 'no_kontrak', 'jenis_kontrak', 'mulai_kontrak', 'berakhir', { l: 'Sisa Hari', c: r => r.berakhir ? dd(r.berakhir, SEL) : '' }, { l: 'Status Kontrak', bd: 1, c: kst }], { rows: DB.karyawan.filter(k => k.tipe == 'Kontrak'), def: { tipe: 'Kontrak', status: 'Aktif', jenis_kontrak: 'PKWT' }, extra: '<label class="btn p imp" title="Impor kontrak kerja dari file Excel">⬆ Impor Excel<input type="file" id="impKontrak" accept=".xlsx,.xls,.csv" hidden></label><button class="btn" data-a="tpl" data-t="kontrak" title="Unduh template Excel untuk impor">⬇ Template</button>' })
+        `<div class="g">${G.sp()}${G.plg()}</div>`
 };

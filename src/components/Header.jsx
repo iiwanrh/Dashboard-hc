@@ -3,8 +3,8 @@ import NotifButton from './NotifButton.jsx';
 
 // ---------- header + navigasi ----------
 const NAV_MAIN = [{ r: 'dashboard', label: '📊 Dashboard' }, { r: 'recruitment', label: '🧲 Recruitment' }];
-const NAV_OPS = [{ r: 'hc', label: 'Operasional HC' }, { r: 'dinas', label: 'Operasional Dinas' }, { r: 'tugas', label: 'Operasional Tugas' }];
-const NAV_ADM = [{ r: 'administrasi', label: 'Karyawan (Tetap · Kontrak · PHL)' }, { r: 'memo', label: 'Administrasi Memo' }];
+const NAV_OPS = [{ r: 'hc', label: 'Operasional HC' }, { r: 'dinas', label: 'Operasional Dinas dan Tugas' }];
+const NAV_ADM = [{ r: 'administrasi_amsa', label: 'Karyawan PT Amsa' }, { r: 'administrasi_jala', label: 'Karyawan PT Jala' }, { r: 'memo', label: 'Administrasi Memo' }];
 
 export default function Header({ route, isAdmin, userName, theme, onToggleTheme, onLoginClick, onLogout, sel, onSelChange }) {
   const [navOpen, setNavOpen] = useState(false);
