@@ -19,8 +19,32 @@ INSERT INTO users (username, password, nama, role) VALUES
 
 DROP TABLE IF EXISTS pengaturan;
 CREATE TABLE pengaturan (id SERIAL PRIMARY KEY, kunci VARCHAR(255) NULL, nilai VARCHAR(255) NULL);
+
+-- Tabel karyawan: ditambah kolom perusahaan (PT Amsa / PT Jala), jenis_kelamin,
+-- tanggal_lahir (dasar hitung Usia otomatis), pendidikan, dan tanggal_tetap
+-- (tanggal resmi jadi pegawai tetap).
 DROP TABLE IF EXISTS karyawan;
-CREATE TABLE karyawan (id SERIAL PRIMARY KEY, nik VARCHAR(255) NULL, nama VARCHAR(255) NULL, departemen VARCHAR(255) NULL, tipe VARCHAR(255) NULL, tgl_masuk DATE NULL, tgl_resign DATE NULL, status VARCHAR(255) NULL, jabatan VARCHAR(255) NULL, alasan_resign VARCHAR(255) NULL, no_kontrak VARCHAR(255) NULL, jenis_kontrak VARCHAR(255) NULL, mulai_kontrak DATE NULL, berakhir DATE NULL);
+CREATE TABLE karyawan (
+  id SERIAL PRIMARY KEY,
+  nik VARCHAR(255) NULL,
+  nama VARCHAR(255) NULL,
+  perusahaan VARCHAR(50) NULL,
+  departemen VARCHAR(255) NULL,
+  tipe VARCHAR(255) NULL,
+  jenis_kelamin VARCHAR(20) NULL,
+  tanggal_lahir DATE NULL,
+  pendidikan VARCHAR(20) NULL,
+  tgl_masuk DATE NULL,
+  tanggal_tetap DATE NULL,
+  tgl_resign DATE NULL,
+  status VARCHAR(255) NULL,
+  jabatan VARCHAR(255) NULL,
+  alasan_resign VARCHAR(255) NULL,
+  no_kontrak VARCHAR(255) NULL,
+  jenis_kontrak VARCHAR(255) NULL,
+  mulai_kontrak DATE NULL,
+  berakhir DATE NULL
+);
 DROP TABLE IF EXISTS manpower;
 CREATE TABLE manpower (id SERIAL PRIMARY KEY, no_pengajuan VARCHAR(255) NULL, tgl_pengajuan DATE NULL, departemen VARCHAR(255) NULL, posisi VARCHAR(255) NULL, jumlah INT NULL, alasan VARCHAR(255) NULL, pemohon VARCHAR(255) NULL, status VARCHAR(255) NULL, tgl_keputusan DATE NULL);
 DROP TABLE IF EXISTS lowongan;
@@ -31,6 +55,8 @@ DROP TABLE IF EXISTS onboarding;
 CREATE TABLE onboarding (id SERIAL PRIMARY KEY, nama VARCHAR(255) NULL, posisi VARCHAR(255) NULL, divisi VARCHAR(255) NULL, tgl_onboarding DATE NULL, tgl_mulai DATE NULL, pj VARCHAR(255) NULL, status VARCHAR(255) NULL, keterangan VARCHAR(255) NULL);
 DROP TABLE IF EXISTS kehadiran;
 CREATE TABLE kehadiran (id SERIAL PRIMARY KEY, bulan DATE NULL, hari_kerja INT NULL, masuk INT NULL, izin_sakit INT NULL, cuti INT NULL, dinas INT NULL, keterangan VARCHAR(255) NULL);
+-- Tabel cuti & lembur* tetap dipertahankan (data tidak dihapus) walau tabel
+-- "Rekapan Cuti Karyawan" dan fitur Upah Lembur sudah tidak ditampilkan di UI.
 DROP TABLE IF EXISTS cuti;
 CREATE TABLE cuti (id SERIAL PRIMARY KEY, tgl_pengajuan DATE NULL, nik VARCHAR(255) NULL, jenis_cuti VARCHAR(255) NULL, mulai DATE NULL, selesai DATE NULL, status VARCHAR(255) NULL, keterangan VARCHAR(255) NULL);
 DROP TABLE IF EXISTS spd;
@@ -53,35 +79,35 @@ CREATE TABLE sp (id SERIAL PRIMARY KEY, no_sp VARCHAR(255) NULL, nik VARCHAR(255
 INSERT INTO pengaturan (kunci, nilai) VALUES
 ('basis_manual', '277');
 
-INSERT INTO karyawan (nik, nama, departemen, tipe, tgl_masuk, tgl_resign, status, jabatan, alasan_resign, no_kontrak, jenis_kontrak, mulai_kontrak, berakhir) VALUES
-('EMP001','Andi Pratama','PPIC','Tetap','2022-03-01',NULL,'Aktif','Sales Executive',NULL,NULL,NULL,NULL,NULL),
-('EMP002','Siti Aisyah','Production Assembly','Tetap','2021-07-15',NULL,'Aktif','Marketing Specialist',NULL,NULL,NULL,NULL,NULL),
-('EMP004','Rina Kartika','Finance & Accounting','Tetap','2020-05-02',NULL,'Aktif','Staff Accounting',NULL,NULL,NULL,NULL,NULL),
-('EMP005','Dimas Setiawan','Production Assembly','Tetap','2024-02-19',NULL,'Aktif','Supervisor Assembly',NULL,NULL,NULL,NULL,NULL),
-('EMP009','Hendra Wijaya','General Affairs','Tetap','2023-09-04','2026-09-30','Resign','Sales Executive','Mengundurkan diri',NULL,NULL,NULL,NULL),
-('EMP010','Laras Ayu','Intelegent System Engineering','Tetap','2024-11-11','2026-06-15','Resign','UI/UX Designer','Pindah domisili',NULL,NULL,NULL,NULL),
-('EMP012','Naruto','QA & QC','Tetap','2026-04-02',NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
-('EMP003','Budi Santoso','Intelegent System Engineering','Kontrak','2025-12-01',NULL,'Aktif','Software Engineer',NULL,'KK/HC/2025/012','PKWT','2025-12-01','2026-11-30'),
-('EMP007','Fajar Nugroho','Production Engineering','Kontrak','2026-08-10',NULL,'Aktif','Staff Produksi',NULL,'KK/HC/2026/003','PKWT','2026-08-10','2027-08-09'),
-('EMP008','Nadia Putri','General Affairs','Kontrak','2026-01-05',NULL,'Aktif','Content Creator',NULL,'KK/HC/2026/001','PKWT','2026-01-05','2026-12-31'),
-('EMP013','Sakura','Product Support','Kontrak','2026-04-03',NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
-('EMP015','Lee','Production Assembly','Kontrak','2026-04-05',NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
-('EMP016','Neji','General Affairs','Kontrak','2026-04-06',NULL,'Aktif','fgfg',NULL,NULL,NULL,NULL,NULL),
-('EMP017','Tenten','Finance & Accounting','Kontrak','2026-04-07',NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
-('EMP018','Shika','Human Capital','Kontrak','2026-04-08',NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
-('EMP019','Choji','Intelegent System Engineering','Kontrak','2026-04-09',NULL,'Aktif','vbvb',NULL,NULL,NULL,NULL,NULL),
-('EMP020','Ino','Production Engineering','Kontrak','2026-04-10',NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
-('EMP021','Shino','Finance & Accounting','Kontrak','2026-04-11',NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
-('EMP022','Hinata','Production Fabrication','Kontrak','2026-04-12',NULL,'Aktif','ttyyy',NULL,NULL,NULL,NULL,NULL),
-('EMP023','Kiba','Product Development','Kontrak','2026-04-13',NULL,'Aktif','vbyt',NULL,NULL,NULL,NULL,NULL),
-('EMP024','Garra','Design Engineering','Kontrak','2026-04-14',NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
-('EMP025','Kankuro','Procurement','Kontrak','2026-04-15',NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
-('EMP026','Temari','Board of Directors (Staff Ahli)','Kontrak','2026-04-16',NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
-('EMP027','Sai','Secretary','Kontrak','2026-04-17',NULL,'Aktif','popo',NULL,NULL,NULL,NULL,NULL),
-('EMP028','Kakashi','Product Support','Kontrak','2026-04-18',NULL,'Aktif','ooqa',NULL,NULL,NULL,NULL,NULL),
-('EMP011','Yoga Pratama','Production Assembly','PHL','2026-04-01',NULL,'Aktif','Operator Produksi',NULL,NULL,NULL,NULL,NULL),
-('EMP014','Sakura','PPIC','PHL','2026-04-04',NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
-('EMP006','Maya Lestari','Human Capital','PHL','2026-03-02',NULL,'Aktif','HR Generalist',NULL,NULL,NULL,NULL,NULL);
+INSERT INTO karyawan (nik, nama, perusahaan, departemen, tipe, jenis_kelamin, tanggal_lahir, pendidikan, tgl_masuk, tanggal_tetap, tgl_resign, status, jabatan, alasan_resign, no_kontrak, jenis_kontrak, mulai_kontrak, berakhir) VALUES
+('EMP001','Andi Pratama','PT Amsa','PPIC','Tetap','Laki-laki','1992-05-14','S1','2022-03-01','2023-03-01',NULL,'Aktif','Sales Executive',NULL,NULL,NULL,NULL,NULL),
+('EMP002','Siti Aisyah','PT Amsa','Production Assembly','Tetap','Perempuan','1990-08-22','D3','2021-07-15','2022-07-15',NULL,'Aktif','Marketing Specialist',NULL,NULL,NULL,NULL,NULL),
+('EMP004','Rina Kartika','PT Amsa','Finance & Accounting','Tetap','Perempuan','1988-02-10','S1','2020-05-02','2021-05-02',NULL,'Aktif','Staff Accounting',NULL,NULL,NULL,NULL,NULL),
+('EMP005','Dimas Setiawan','PT Amsa','Production Assembly','Tetap','Laki-laki','1991-11-30','S1','2024-02-19','2025-02-19',NULL,'Aktif','Supervisor Assembly',NULL,NULL,NULL,NULL,NULL),
+('EMP009','Hendra Wijaya','PT Amsa','General Affairs','Tetap','Laki-laki','1989-04-18','SMA/SMK','2023-09-04','2024-09-04','2026-09-30','Resign','Sales Executive','Mengundurkan diri',NULL,NULL,NULL,NULL),
+('EMP010','Laras Ayu','PT Jala','Intelegent System Engineering','Tetap','Perempuan','1996-01-25','S1','2024-11-11','2025-11-11','2026-06-15','Resign','UI/UX Designer','Pindah domisili',NULL,NULL,NULL,NULL),
+('EMP012','Naruto','PT Jala','QA & QC','Tetap','Laki-laki','1998-10-10','SMA/SMK','2026-04-02',NULL,NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
+('EMP003','Budi Santoso','PT Jala','Intelegent System Engineering','Kontrak','Laki-laki','1994-03-03','S1','2025-12-01',NULL,NULL,'Aktif','Software Engineer',NULL,'KK/HC/2025/012','PKWT','2025-12-01','2026-11-30'),
+('EMP007','Fajar Nugroho','PT Jala','Production Engineering','Kontrak','Laki-laki','1997-07-07','SMA/SMK','2026-08-10',NULL,NULL,'Aktif','Staff Produksi',NULL,'KK/HC/2026/003','PKWT','2026-08-10','2027-08-09'),
+('EMP008','Nadia Putri','PT Amsa','General Affairs','Kontrak','Perempuan','1999-09-09','S1','2026-01-05',NULL,NULL,'Aktif','Content Creator',NULL,'KK/HC/2026/001','PKWT','2026-01-05','2026-12-31'),
+('EMP013','Sakura','PT Jala','Product Support','Kontrak','Perempuan','2000-03-28','S1','2026-04-03',NULL,NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
+('EMP015','Lee','PT Amsa','Production Assembly','Kontrak','Laki-laki','1999-06-06','SMA/SMK','2026-04-05',NULL,NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
+('EMP016','Neji','PT Amsa','General Affairs','Kontrak','Laki-laki','1998-12-12','S1','2026-04-06',NULL,NULL,'Aktif','fgfg',NULL,NULL,NULL,NULL,NULL),
+('EMP017','Tenten','PT Amsa','Finance & Accounting','Kontrak','Perempuan','1999-02-02','D3','2026-04-07',NULL,NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
+('EMP018','Shika','PT Amsa','Human Capital','Kontrak','Laki-laki','1995-05-05','S2','2026-04-08',NULL,NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
+('EMP019','Choji','PT Jala','Intelegent System Engineering','Kontrak','Laki-laki','1997-08-08','SMA/SMK','2026-04-09',NULL,NULL,'Aktif','vbvb',NULL,NULL,NULL,NULL,NULL),
+('EMP020','Ino','PT Jala','Production Engineering','Kontrak','Perempuan','1998-04-04','S1','2026-04-10',NULL,NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
+('EMP021','Shino','PT Amsa','Finance & Accounting','Kontrak','Laki-laki','1996-09-09','S1','2026-04-11',NULL,NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
+('EMP022','Hinata','PT Jala','Production Fabrication','Kontrak','Perempuan','1999-01-11','D3','2026-04-12',NULL,NULL,'Aktif','ttyyy',NULL,NULL,NULL,NULL,NULL),
+('EMP023','Kiba','PT Jala','Product Development','Kontrak','Laki-laki','1997-02-20','SMA/SMK','2026-04-13',NULL,NULL,'Aktif','vbyt',NULL,NULL,NULL,NULL,NULL),
+('EMP024','Garra','PT Jala','Design Engineering','Kontrak','Laki-laki','1996-06-16','S1','2026-04-14',NULL,NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
+('EMP025','Kankuro','PT Jala','Procurement','Kontrak','Laki-laki','1995-10-05','SMA/SMK','2026-04-15',NULL,NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
+('EMP026','Temari','PT Jala','Board of Directors (Staff Ahli)','Kontrak','Perempuan','1993-12-21','S2','2026-04-16',NULL,NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
+('EMP027','Sai','PT Amsa','Secretary','Kontrak','Laki-laki','1997-11-11','S1','2026-04-17',NULL,NULL,'Aktif','popo',NULL,NULL,NULL,NULL,NULL),
+('EMP028','Kakashi','PT Jala','Product Support','Kontrak','Laki-laki','1985-09-15','S2','2026-04-18',NULL,NULL,'Aktif','ooqa',NULL,NULL,NULL,NULL,NULL),
+('EMP011','Yoga Pratama','PT Amsa','Production Assembly','PHL','Laki-laki','2000-05-25','SMA/SMK','2026-04-01',NULL,NULL,'Aktif','Operator Produksi',NULL,NULL,NULL,NULL,NULL),
+('EMP014','Sakura','PT Amsa','PPIC','PHL','Perempuan','2001-07-19','SMA/SMK','2026-04-04',NULL,NULL,'Aktif',NULL,NULL,NULL,NULL,NULL,NULL),
+('EMP006','Maya Lestari','PT Amsa','Human Capital','PHL','Perempuan','1994-01-30','S1','2026-03-02',NULL,NULL,'Aktif','HR Generalist',NULL,NULL,NULL,NULL,NULL);
 
 INSERT INTO manpower (no_pengajuan, tgl_pengajuan, departemen, posisi, jumlah, alasan, pemohon, status, tgl_keputusan) VALUES
 ('MP-2026-001','2026-10-05','PPIC','Operator Produksi',3,'Ekspansi lini produksi','Kepala PPIC','Diterima','2026-10-12'),

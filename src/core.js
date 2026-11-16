@@ -20,7 +20,7 @@ export const L = { tipe: ['Tetap', 'Kontrak', 'PHL'], ks: ['Aktif', 'Resign'], j
 const F = (k, l, ty = 't', o) => ({ k, l, ty, o });
 export const T = {
     pengaturan: [F('kunci', 'Pengaturan'), F('nilai', 'Nilai')],
-    karyawan: [F('nik', 'NIK'), F('nama', 'Nama Lengkap'), F('perusahaan', 'Perusahaan', 's', PERUSAHAAN), F('departemen', 'Departemen', 's', DEPT), F('tipe', 'Tipe', 's', L.tipe), F('jenis_kelamin', 'Jenis Kelamin', 's', L.gender), F('tanggal_lahir', 'Tanggal Lahir', 'd'), F('pendidikan', 'Pendidikan Terakhir', 's', L.pendidikan), F('tgl_masuk', 'Tanggal Masuk', 'd'), F('tanggal_tetap', 'Tgl. Tetap (Pegawai Tetap)', 'd'), F('tgl_resign', 'Tanggal Resign', 'd'), F('status', 'Status', 'b', L.ks), F('jabatan', 'Jabatan'), F('alasan_resign', 'Alasan Resign'), F('no_kontrak', 'No. Kontrak'), F('jenis_kontrak', 'Jenis Kontrak', 's', L.jk), F('mulai_kontrak', 'Mulai Kontrak', 'd'), F('berakhir', 'Berakhir', 'd')],
+    karyawan: [F('nik', 'NIK'), F('nama', 'Nama Lengkap'), F('perusahaan', 'Perusahaan', 's', PERUSAHAAN), F('departemen', 'Departemen', 's', DEPT), F('tipe', 'Tipe', 's', L.tipe), F('jenis_kelamin', 'Jenis Kelamin', 's', L.gender), F('tanggal_lahir', 'Tanggal Lahir', 'd'), F('pendidikan', 'Pendidikan Terakhir', 's', L.pendidikan), F('tgl_masuk', 'Tanggal Masuk', 'd'), F('tanggal_tetap', 'Tgl. Tetap (Pegawai Tetap)', 'd'), F('tgl_resign', 'Tanggal Resign', 'd'), F('status', 'Status', 'b', L.ks), F('jabatan', 'Jabatan'), F('alasan_resign', 'Alasan Resign'), F('no_kontrak', 'No. Kontrak'), F('jenis_kontrak', 'Jenis Kontrak', 's', L.jk), F('mulai_kontrak', 'Mulai Kontrak', 'd'), F('berakhir', 'Berakhir Kontrak', 'd')],
     manpower: [F('no_pengajuan', 'No. Pengajuan'), F('tgl_pengajuan', 'Tgl Pengajuan', 'd'), F('departemen', 'Departemen', 's', DEPT), F('posisi', 'Posisi'), F('jumlah', 'Jumlah Orang', 'n'), F('alasan', 'Alasan'), F('pemohon', 'Pemohon'), F('status', 'Status', 'b', L.mp), F('tgl_keputusan', 'Tgl Keputusan', 'd')],
     lowongan: [F('posisi', 'Posisi'), F('departemen', 'Departemen', 's', DEPT), F('tgl_buka', 'Tanggal Buka', 'd'), F('kebutuhan', 'Kebutuhan', 'n'), F('pelamar', 'Jumlah Pelamar', 'n'), F('diterima', 'Diterima', 'n'), F('status', 'Status', 'b', L.lw), F('target_selesai', 'Target Selesai', 'd')],
     funnel: [F('tahap', 'Tahap'), F('jumlah', 'Jumlah', 'n')],
@@ -223,7 +223,7 @@ export const G = {
     plg: () => chart('Pelanggaran per Kategori', 'bar', L.kat, [{ label: 'Jumlah', data: cnts(DB.pelanggaran, 'kategori', L.kat) }])
 };
 // kolom tabel Administrasi (per perusahaan): + Jenis Kelamin, Usia (otomatis), Pendidikan Terakhir, Tgl. Tetap
-const adm = (t, co) => tbl('karyawan', 'Karyawan ' + t, ['nik', 'nama', 'departemen', 'jenis_kelamin', { l: 'Usia', c: r => usia(r.tanggal_lahir) }, 'pendidikan', 'tgl_masuk', 'tanggal_tetap', 'tgl_resign', 'status'], { rows: DB.karyawan.filter(k => k.tipe == t && (!co || k.perusahaan == co)), def: { tipe: t, status: 'Aktif', perusahaan: co || '' } });
+const adm = (t, co) => tbl('karyawan', 'Karyawan ' + t, ['nik', 'nama', 'departemen', 'jenis_kelamin', { l: 'Usia', c: r => usia(r.tanggal_lahir) }, 'pendidikan', 'tgl_masuk', ...(t == 'Kontrak' ? ['mulai_kontrak', 'berakhir'] : ['tanggal_tetap']), 'tgl_resign', 'status'], { rows: DB.karyawan.filter(k => k.tipe == t && (!co || k.perusahaan == co)), def: { tipe: t, status: 'Aktif', perusahaan: co || '' } });
 const nama = { l: 'Nama', c: r => nm(r.nik) };
 // ---------- daftar gabungan semua jenis karyawan (per perusahaan) + sort + impor Excel
 const sv = v => String(v ?? ''), tpIdx = t => { const i = L.tipe.indexOf(t); return i < 0 ? 99 : i; };
@@ -238,7 +238,7 @@ function admAll(co) {
     const base = co ? DB.karyawan.filter(k => k.perusahaan == co) : DB.karyawan;
     const rows = [...base].sort(ADMSORTERS[ADMSORT] || ADMSORTERS.nama);
     const opt = (v, l) => `<option value="${v}"${ADMSORT == v ? ' selected' : ''}>${l}</option>`;
-    const cols = [col('karyawan', 'nik'), col('karyawan', 'nama'), col('karyawan', 'departemen'), col('karyawan', 'tipe'), col('karyawan', 'jenis_kelamin'), { l: 'Usia', c: r => usia(r.tanggal_lahir) }, col('karyawan', 'pendidikan'), col('karyawan', 'tgl_masuk'), col('karyawan', 'tanggal_tetap'), col('karyawan', 'status'), col('karyawan', 'jabatan')];
+    const cols = [col('karyawan', 'nik'), col('karyawan', 'nama'), col('karyawan', 'departemen'), col('karyawan', 'tipe'), col('karyawan', 'jenis_kelamin'), { l: 'Usia', c: r => usia(r.tanggal_lahir) }, col('karyawan', 'pendidikan'), col('karyawan', 'tgl_masuk'), col('karyawan', 'tanggal_tetap'), col('karyawan', 'mulai_kontrak'), col('karyawan', 'berakhir'), { l: 'Status Kontrak', ty: 'b', c: r => r.tipe == 'Kontrak' ? kst(r) : '' }, col('karyawan', 'status'), col('karyawan', 'jabatan')];
     const cell = (r, c) => { const v = c.c ? c.c(r) : r[c.k]; if (v == null || v === '')
         return ''; return c.ty == 'b' ? bd(v) : c.ty == 'd' ? fd(v) : esc(v); };
     const title = co ? 'Semua Karyawan — ' + co : 'Semua Karyawan (Tetap · Kontrak · PHL)';
