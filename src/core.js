@@ -168,8 +168,8 @@ function deptRows() {
     names.sort((x, y) => { const i = DEPT.indexOf(x), j = DEPT.indexOf(y); return (i < 0 ? 999 : i) - (j < 0 ? 999 : j) || x.localeCompare(y); });
     return names.map(d => { const r = { d }; L.tipe.forEach(t => r[t] = cnt(a, k => nmD(k) == d && k.tipe == t)); r.tot = cnt(a, k => nmD(k) == d); return r; });
 }
-function trendRows() {
-    const base = D(SEL), K = DB.karyawan, day = x => (x || '').slice(0, 10), hc = end => cnt(K, k => k.tgl_masuk && day(k.tgl_masuk) <= end && (!k.tgl_resign || day(k.tgl_resign) > end));
+function trendRows(co) {
+    const base = D(SEL), K = co ? DB.karyawan.filter(k => k.perusahaan == co) : DB.karyawan, day = x => (x || '').slice(0, 10), hc = end => cnt(K, k => k.tgl_masuk && day(k.tgl_masuk) <= end && (!k.tgl_resign || day(k.tgl_resign) > end));
     return [...Array(12)].map((_, i) => {
         const d = new Date(base.getFullYear(), base.getMonth() - 11 + i, 1), end = i == 11 ? SEL : iso(new Date(d.getFullYear(), d.getMonth() + 1, 0)), prev = iso(new Date(d.getFullYear(), d.getMonth(), 0)), inP = x => x && day(x) > prev && day(x) <= end;
         return { label: MON[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2), awal: hc(prev), masuk: cnt(K, k => k.tgl_masuk && inP(k.tgl_masuk)), resign: cnt(K, k => k.tgl_masuk && inP(k.tgl_resign)), akhir: hc(end) };
@@ -207,6 +207,27 @@ export const G = {
         ], { ro: 1, rows: R });
     },
     headBlock: () => `<div class="g">${G.head()}${G.headTrend()}</div><div class="g">${G.headTbl()}${G.trendTbl()}</div>`,
+    // ---- headcount per perusahaan (PT Amsa vs PT Jala)
+    headCo: () => {
+        const TC = { Tetap: '#10b981', Kontrak: '#4f46e5', PHL: '#f59e0b' }, A = PERUSAHAAN.map(c => admStats(c));
+        return chart('Headcount Aktif per Perusahaan', 'bar', PERUSAHAAN, L.tipe.map(t => ({ label: t, color: TC[t], data: A.map(a => a[t]) })), { st: 1, labels: 1 });
+    },
+    headCoTrend: () => {
+        const CC = ['#4f46e5', '#f59e0b', '#10b981', '#ef4444'], R = PERUSAHAAN.map(c => trendRows(c));
+        return chart('Tren Headcount Aktif per Perusahaan — 12 Bulan Terakhir', 'line', R[0].map(r => r.label), PERUSAHAAN.map((c, i) => ({ label: c, color: CC[i % CC.length], data: R[i].map(r => r.akhir), borderColor: CC[i % CC.length], backgroundColor: CC[i % CC.length], tension: .35, borderWidth: 3, pointRadius: 4, fill: false })));
+    },
+    headCoTbl: () => {
+        const R = PERUSAHAAN.map(c => ({ c, ...admStats(c) })), tot = { c: 'TOTAL', Tetap: 0, Kontrak: 0, PHL: 0, aktif: 0, all: 1 };
+        R.forEach(r => { L.tipe.forEach(t => tot[t] += r[t]); tot.aktif += r.aktif; });
+        const B = (r, v) => r.all ? `<b>${v}</b>` : v;
+        return tbl('headcount_perusahaan', 'Tabel Headcount Aktif per Perusahaan', [
+            { l: 'Perusahaan', raw: 1, c: r => B(r, esc(r.c)) },
+            ...L.tipe.map(t => ({ l: t, raw: 1, c: r => B(r, nf(r[t])) })),
+            { l: 'Total Aktif', raw: 1, c: r => B(r, nf(r.aktif)) },
+            { l: '% dari Total', raw: 1, c: r => B(r, tot.aktif ? (r.aktif / tot.aktif * 100).toFixed(1) + '%' : '0%') }
+        ], { ro: 1, rows: [...R, tot] });
+    },
+    headCoBlock: () => `<div class="g">${G.headCo()}${G.headCoTrend()}</div><div class="g">${G.headCoTbl()}</div>`,
     funnel: () => chart('Funnel Kandidat per Tahap', 'bar', DB.funnel.map(r => r.tahap), [{ label: 'Kandidat', data: DB.funnel.map(r => +r.jumlah) }], { h: 1 }),
     mp: () => chart('Status Pengajuan Manpower', 'doughnut', L.mp, [{ data: cnts(DB.manpower, 'status', L.mp) }]),
     add: () => chart('Penambahan Karyawan per Bulan', 'bar', MON, [{ label: 'Penambahan', data: MON.map((_, i) => cnt(DB.karyawan, k => k.tgl_masuk && k.tgl_masuk.slice(0, 7) == X.y + '-' + String(i + 1).padStart(2, '0'))) }]),
@@ -459,6 +480,7 @@ export const P = {
         sec('Administrasi — PT Amsa', 'administrasi_amsa', kpis([kpi('Karyawan tetap', X.amsa.Tetap), kpi('Karyawan kontrak', X.amsa.Kontrak, '', 1), kpi('PHL', X.amsa.PHL, '', 2), kpi('Total aktif', X.amsa.aktif, '', 3), kpi('Resign (total)', X.amsa.resign, '', 4), kpi('Kontrak segera berakhir', X.amsa.segera, 'Sisa ≤ 30 hari', 5)])) +
         sec('Administrasi — PT Jala', 'administrasi_jala', kpis([kpi('Karyawan tetap', X.jala.Tetap), kpi('Karyawan kontrak', X.jala.Kontrak, '', 1), kpi('PHL', X.jala.PHL, '', 2), kpi('Total aktif', X.jala.aktif, '', 3), kpi('Resign (total)', X.jala.resign, '', 4), kpi('Kontrak segera berakhir', X.jala.segera, 'Sisa ≤ 30 hari', 5)])) +
         `<div class="sh"><h2>Headcount Aktif per Departemen</h2></div>${G.headBlock()}` +
+        `<div class="sh"><h2>Headcount Aktif per Perusahaan</h2></div>${G.headCoBlock()}` +
         sec('Administrasi Memo', 'memo', kpis([kpi('Total memo', X.memo), kpi('Memo terbit', X.terbit, '', 3), kpi('Memo draft', X.draft, '', 2), kpi('Memo bulan ini', X.memoB, '', 1)]) + `<div class="g">${G.memo()}</div>`) +
         sec('Employee Relations', 'er', kpis([kpi('Pelanggaran (thn ini)', X.plgY), kpi('Pelanggaran berat', X.Berat, '', 4), kpi('SP berlaku', X.spOk, '', 2), kpi('SP kadaluarsa', X.spEx, '', 5), kpi('Pelanggaran ringan', X.Ringan, '', 1), kpi('Pelanggaran sedang', X.Sedang, '', 3)]) + `<div class="g">${G.sp()}${G.plg()}</div>`),
     recruitment: () => head('Recruitment', 'Pengajuan manpower, lowongan aktif, funnel kandidat, onboarding, dan penambahan karyawan.') +
