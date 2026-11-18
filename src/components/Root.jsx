@@ -1,12 +1,8 @@
 import { useState, useEffect } from 'react';
 import { whoami } from '../api.js';
 import Dashboard from './Dashboard.jsx';
+import PublicDashboard from './PublicDashboard.jsx';
 
-// Dashboard sekarang SELALU tampil ke siapa saja (mode pengunjung/read-only).
-// Root hanya memeriksa sekali di awal apakah ada sesi admin yang masih aktif
-// (cookie login tersimpan), supaya tombol edit/hapus langsung muncul tanpa
-// perlu login ulang. Login sendiri sekarang berupa modal, dipicu dari tombol
-// di pojok kanan atas header (lihat Dashboard.jsx / Header.jsx).
 export default function Root() {
   const [ready, setReady] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -15,13 +11,13 @@ export default function Root() {
   useEffect(() => {
     (async () => {
       try {
-        const j = await whoami();
-        if (j.login) {
+        const session = await whoami();
+        if (session.login) {
           setIsAdmin(true);
-          setUserName(j.nama || j.username || '');
+          setUserName(session.nama || session.username || '');
         }
       } catch {
-        // abaikan — tetap tampil sebagai pengunjung (read-only)
+        // Jika sesi tidak dapat diperiksa, tampilkan mode pengunjung.
       }
       setReady(true);
     })();
@@ -31,12 +27,16 @@ export default function Root() {
     return <p className="empty" style={{ textAlign: 'center', padding: 48, color: '#64748b' }}>Memuat aplikasi…</p>;
   }
 
-  return (
-    <Dashboard
-      isAdmin={isAdmin}
-      userName={userName}
-      onLoggedIn={(name) => { setIsAdmin(true); setUserName(name || ''); }}
-      onLoggedOut={() => { setIsAdmin(false); setUserName(''); }}
-    />
-  );
+  if (isAdmin) {
+    return (
+      <Dashboard
+        isAdmin
+        userName={userName}
+        onLoggedIn={(name) => { setIsAdmin(true); setUserName(name || ''); }}
+        onLoggedOut={() => { setIsAdmin(false); setUserName(''); }}
+      />
+    );
+  }
+
+  return <PublicDashboard onAdminLogin={(name) => { setIsAdmin(true); setUserName(name || ''); }} />;
 }

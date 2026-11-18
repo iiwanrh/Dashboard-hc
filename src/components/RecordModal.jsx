@@ -8,7 +8,7 @@ export default function RecordModal({ table, id, def, onClose, onSaved }) {
   const base = id ? (DB[table].find((x) => x.id == id) || {}) : (def || {});
   const [values, setValues] = useState(() => {
     const v = {};
-    fields.forEach((f) => { v[f.k] = base[f.k] ?? ''; });
+    fields.forEach((f) => { v[f.k] = base[f.k] ?? (f.ty === 'c' ? false : ''); });
     return v;
   });
   const [saving, setSaving] = useState(false);
@@ -31,6 +31,9 @@ export default function RecordModal({ table, id, def, onClose, onSaved }) {
   function Field(f) {
     const v = values[f.k];
     const cls = 'w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-400';
+    if (f.ty === 'c') {
+      return <input type="checkbox" checked={!!v} onChange={(e) => set(f.k, e.target.checked)} className="h-4 w-4 accent-indigo-600" />;
+    }
     if ('sbk'.includes(f.ty)) {
       const opts = f.ty === 'k' ? DB.karyawan.map((k) => [k.nik, k.nik + ' — ' + k.nama]) : f.o.map((x) => [x, x]);
       return (

@@ -32,7 +32,7 @@ export const T = {
     surat_tugas: [F('no_surat', 'No. Surat Tugas'), F('tanggal', 'Tanggal', 'd'), F('nik', 'NIK Karyawan', 'k'), F('tujuan', 'Tujuan Tugas'), F('mulai', 'Mulai', 'd'), F('selesai', 'Selesai', 'd')],
     lembur: [F('no_surat', 'No. Surat Lembur'), F('tanggal', 'Tanggal Lembur', 'd'), F('nik', 'NIK Karyawan', 'k'), F('jam_mulai', 'Jam Mulai', 'm'), F('jam_selesai', 'Jam Selesai', 'm'), F('hari_lembur', 'Hari Lembur', 's', L.hl)],
     lembur_status: [F('tanggal', 'Tanggal Lembur', 'd'), F('status', 'Status Penggajian', 'b', L.hon), F('tgl_pengajuan', 'Tgl Pengajuan', 'd')],
-    memo: [F('no_memo', 'No. Memo'), F('tanggal', 'Tanggal', 'd'), F('perihal', 'Perihal'), F('tujuan', 'Ditujukan Kepada'), F('dari', 'Dari'), F('status', 'Status', 'b', L.memo), F('keterangan', 'Keterangan')],
+    memo: [F('no_memo', 'No. Memo'), F('tanggal', 'Tanggal', 'd'), F('perihal', 'Perihal'), F('tujuan', 'Ditujukan Kepada'), F('dari', 'Dari'), F('status', 'Status', 'b', L.memo), F('keterangan', 'Keterangan'), F('untuk_semua_karyawan', 'Publikasikan untuk seluruh karyawan', 'c')],
     pelanggaran: [F('no_plg', 'No.'), F('tanggal', 'Tanggal', 'd'), F('nik', 'NIK Karyawan', 'k'), F('jenis', 'Jenis Pelanggaran'), F('kategori', 'Kategori', 'b', L.kat), F('uraian', 'Uraian / Bukti'), F('tindak_lanjut', 'Tindak Lanjut')],
     sp: [F('no_sp', 'No. SP'), F('nik', 'NIK Karyawan', 'k'), F('jenis_sp', 'Jenis SP', 's', L.sp), F('tgl_terbit', 'Tanggal Terbit', 'd'), F('masa_berlaku', 'Masa Berlaku (bulan)', 'n'), F('no_pelanggaran', 'No. Pelanggaran')]
 };
@@ -503,7 +503,7 @@ export const P = {
     administrasi_jala: () => admPageBody('PT Jala'),
     memo: () => head('Administrasi Memo', 'Memo internal perusahaan. Ubah status (Draft / Terbit / Arsip) lewat tombol ubah.') +
         kpis([kpi('Total memo', X.memo), kpi('Memo terbit', X.terbit, '', 3), kpi('Memo draft', X.draft, '', 2), kpi('Memo bulan ini', X.memoB, '', 1)]) +
-        `<div class="g w">${tbl('memo', 'A. Daftar Memo', ['no_memo', 'tanggal', 'perihal', 'tujuan', 'dari', 'status', 'keterangan'])}${G.memo()}</div>`,
+        `<div class="g w">${tbl('memo', 'A. Daftar Memo', ['no_memo', 'tanggal', 'perihal', 'tujuan', 'dari', 'status', { l: 'Publik untuk karyawan', c: r => r.untuk_semua_karyawan ? 'Ya' : 'Tidak' }, 'keterangan'])}${G.memo()}</div>`,
     er: () => head('Employee Relations', 'Pelanggaran karyawan dan surat peringatan (SP).') +
         kpis([kpi('Pelanggaran (thn ini)', X.plgY), kpi('Pelanggaran berat', X.Berat, '', 4), kpi('SP berlaku', X.spOk, '', 2), kpi('SP kadaluarsa', X.spEx, '', 5), kpi('Pelanggaran ringan', X.Ringan, '', 1), kpi('Pelanggaran sedang', X.Sedang, '', 3)]) +
         tbl('pelanggaran', 'A. Daftar Pelanggaran', ['no_plg', 'tanggal', 'nik', nama, 'jenis', 'kategori', 'uraian', 'tindak_lanjut']) +
