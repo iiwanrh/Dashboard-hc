@@ -1,8 +1,6 @@
-// API data internal. Semua pembacaan dan perubahan melalui endpoint ini
-// wajib dilakukan oleh admin. Data publik akan disediakan melalui endpoint
-// /api/public/* yang terpisah dan hanya mengirim field yang diizinkan.
+// Pengganti api.php — CRUD generik untuk semua tabel dashboard.
 import { query } from '../lib/db.js';
-import { requireAdmin } from '../lib/auth.js';
+import { requireLogin, getSession } from '../lib/auth.js';
 
 const TABLES = ['pengaturan', 'karyawan', 'manpower', 'lowongan', 'funnel', 'onboarding', 'kehadiran', 'cuti', 'spd', 'honor', 'surat_tugas', 'lembur', 'lembur_status', 'memo', 'pelanggaran', 'sp'];
 
@@ -14,18 +12,52 @@ async function columnsOf(table) {
   return rows.map((r) => r.column_name);
 }
 
+// ---------------------------------------------------------------------------
+// Tampilan pengunjung (belum login admin) hanya boleh melihat: Dashboard (agregat),
+// Recruitment (KPI + Lowongan Aktif + Funnel + chart), Administrasi (KPI +
+// headcount per departemen + daftar nama singkat + memo yang SUDAH TERBIT), dan
+// Employee Relations (KPI + chart saja). Jadi walau endpoint ini "t=all" dan
+// publik (dipakai dashboard pengunjung), kita WAJIB menyaring di server supaya
+// data mentah yang tidak boleh dilihat pengunjung (nama pelamar/pemohon,
+// isi pelanggaran, no SP, isi memo draft, dsb) tidak pernah sampai ke browser —
+// menyembunyikannya hanya di tampilan (UI) saja tidak cukup aman.
+function pick(row, keys) {
+  const o = {};
+  for (const k of keys) o[k] = row[k];
+  return o;
+}
+function filterForVisitor(out) {
+  return {
+    pengaturan: out.pengaturan,
+    karyawan: out.karyawan.map((r) => pick(r, ['id', 'nik', 'nama', 'perusahaan', 'departemen', 'tipe', 'status', 'tgl_masuk', 'tgl_resign', 'berakhir', 'jenis_kontrak'])),
+    manpower: out.manpower.map((r) => pick(r, ['id', 'status'])),
+    lowongan: out.lowongan,
+    funnel: out.funnel,
+    onboarding: out.onboarding.map((r) => pick(r, ['id', 'tgl_onboarding'])),
+    kehadiran: out.kehadiran.map((r) => pick(r, ['id', 'bulan', 'hari_kerja', 'masuk', 'izin_sakit', 'cuti', 'dinas'])),
+    cuti: [],
+    spd: out.spd.map((r) => pick(r, ['id', 'tgl_surat', 'berangkat', 'kembali'])),
+    honor: out.honor.map((r) => pick(r, ['id', 'nominal', 'status'])),
+    surat_tugas: out.surat_tugas.map((r) => pick(r, ['id', 'mulai', 'selesai'])),
+    lembur: [],
+    lembur_status: [],
+    memo: out.memo.map((r) => (r.status === 'Terbit' ? r : pick(r, ['id', 'status', 'tanggal']))),
+    pelanggaran: out.pelanggaran.map((r) => pick(r, ['id', 'tanggal', 'kategori'])),
+    sp: out.sp.map((r) => pick(r, ['id', 'tgl_terbit', 'masa_berlaku'])),
+  };
+}
+
 export default async function handler(req, res) {
   const m = req.method;
-  if (!['GET', 'POST', 'DELETE'].includes(m)) {
-    res.setHeader('Allow', 'GET, POST, DELETE');
-    res.status(405).json({ error: 'Metode tidak didukung' });
-    return;
+  // Baca data (GET) boleh diakses siapa saja (mode pengunjung / read-only di dashboard),
+  // tapi isinya disaring di filterForVisitor() bila belum login admin.
+  // Tambah/ubah/hapus (POST & DELETE) tetap wajib login sebagai admin.
+  if (m !== 'GET') {
+    const session = requireLogin(req, res);
+    if (!session) return; // requireLogin sudah mengirim 401
   }
 
   try {
-    const session = await requireAdmin(req, res);
-    if (!session) return;
-
     const t = String(req.query.t || '');
     const id = parseInt(req.query.id, 10) || 0;
 
@@ -35,20 +67,14 @@ export default async function handler(req, res) {
         const { rows } = await query(`SELECT * FROM "${x}" ORDER BY id`);
         out[x] = rows;
       }
-      res.status(200).json(out);
+      const isAdmin = !!getSession(req);
+      res.status(200).json(isAdmin ? out : filterForVisitor(out));
       return;
     }
 
-    if (!TABLES.includes(t)) {
-      res.status(400).json({ error: 'Tabel tidak dikenal' });
-      return;
-    }
+    if (!TABLES.includes(t)) throw new Error('Tabel tidak dikenal');
 
     if (m === 'DELETE') {
-      if (!id) {
-        res.status(400).json({ error: 'ID data tidak valid' });
-        return;
-      }
       await query(`DELETE FROM "${t}" WHERE id = $1`, [id]);
       res.status(200).json({ ok: true });
       return;
@@ -64,10 +90,7 @@ export default async function handler(req, res) {
         }
       }
       const keys = Object.keys(data);
-      if (!keys.length) {
-        res.status(400).json({ error: 'Tidak ada data untuk disimpan' });
-        return;
-      }
+      if (!keys.length) throw new Error('Tidak ada data');
 
       if (id) {
         const set = keys.map((c, i) => `"${c}" = $${i + 1}`).join(', ');
@@ -83,8 +106,9 @@ export default async function handler(req, res) {
       res.status(200).json({ ok: true });
       return;
     }
+
+    throw new Error('Metode tidak didukung');
   } catch (e) {
-    console.error('API data error:', e);
-    res.status(500).json({ error: 'Terjadi kesalahan saat memproses data.' });
+    res.status(500).json({ error: e.message });
   }
 }

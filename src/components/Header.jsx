@@ -69,7 +69,7 @@ export default function Header({ route, isAdmin, userName, theme, onToggleTheme,
   // Layar lebar (>=1024px) tampil di bar; layar kecil dipindah ke dalam panel menu burger.
   const Actions = ({ className }) => (
     <div className={'items-center gap-2 ' + className}>
-      <NotifButton />
+      {isAdmin && <NotifButton />}
       <button type="button" onClick={onToggleTheme} className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/15 hover:bg-white/25 transition" title={theme === 'dark' ? 'Mode terang' : 'Mode gelap'}>
         {theme === 'dark' ? '☀️' : '🌙'}
       </button>
@@ -97,7 +97,7 @@ export default function Header({ route, isAdmin, userName, theme, onToggleTheme,
         </a>
         <nav className="hidden lg:flex items-center gap-1 flex-1 min-w-0">
           {NAV_MAIN.map((n) => <a key={n.r} href={'#/' + n.r} className={linkCls(n.r)}>{n.label}</a>)}
-          <Dropdown id="ops" label="⚙️ Operasional" items={NAV_OPS} />
+          {isAdmin && <Dropdown id="ops" label="⚙️ Operasional" items={NAV_OPS} />}
           <Dropdown id="adm" label="🗂️ Administrasi" items={NAV_ADM} />
           <a href="#/er" className={linkCls('er')}>🤝 Employee Relations</a>
         </nav>
@@ -110,7 +110,7 @@ export default function Header({ route, isAdmin, userName, theme, onToggleTheme,
       {navOpen && (
         <nav className="lg:hidden px-4 pb-3 flex flex-col gap-1 bg-black/10">
           {NAV_MAIN.map((n) => <a key={n.r} href={'#/' + n.r} onClick={() => setNavOpen(false)} className={linkCls(n.r)}>{n.label}</a>)}
-          <Dropdown id="ops-m" label="⚙️ Operasional" items={NAV_OPS} />
+          {isAdmin && <Dropdown id="ops-m" label="⚙️ Operasional" items={NAV_OPS} />}
           <Dropdown id="adm-m" label="🗂️ Administrasi" items={NAV_ADM} />
           <a href="#/er" onClick={() => setNavOpen(false)} className={linkCls('er')}>🤝 Employee Relations</a>
           <DateField className="mt-2" />

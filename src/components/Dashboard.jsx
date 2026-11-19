@@ -18,7 +18,16 @@ export default function Dashboard({ isAdmin: initialAdmin, userName: initialUser
   const [userName, setUserName] = useState(initialUserName || '');
   const [showLogin, setShowLogin] = useState(false);
   const [dbVersion, setDbVersion] = useState(0);
-  const [route, setRoute] = useState(() => (P[location.hash.slice(2)] ? location.hash.slice(2) : 'dashboard'));
+  // Halaman "Operasional HC" dan "Operasional Dinas dan Tugas" hanya untuk admin —
+  // pengunjung yang mencoba membuka route ini (lewat hash URL manual) dialihkan ke Dashboard.
+  const ADMIN_ONLY_ROUTES = ['hc', 'dinas'];
+  const routeFromHash = (initialAdmin) => {
+    const r = location.hash.slice(2);
+    if (!P[r]) return 'dashboard';
+    if (ADMIN_ONLY_ROUTES.includes(r) && !initialAdmin) return 'dashboard';
+    return r;
+  };
+  const [route, setRoute] = useState(() => routeFromHash(initialAdmin));
   const [selState, setSelState] = useState(() => localStorage.getItem('hc_sel') || iso(new Date()));
   const [admSort, setAdmSortState] = useState('nama');
   const [theme, setTheme] = useState(() => localStorage.getItem('hc_theme') || 'light');
@@ -52,13 +61,23 @@ export default function Dashboard({ isAdmin: initialAdmin, userName: initialUser
   // hash routing
   useEffect(() => {
     const onHash = () => {
-      const r = location.hash.slice(2);
-      setRoute(P[r] ? r : 'dashboard');
+      setRoute(routeFromHash(isAdmin));
       window.scrollTo(0, 0);
     };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
+
+  // kalau status admin berubah (mis. logout saat sedang membuka halaman khusus admin),
+  // pastikan tetap berada di halaman yang diizinkan untuk statusnya saat ini.
+  useEffect(() => {
+    if (ADMIN_ONLY_ROUTES.includes(route) && !isAdmin) {
+      location.hash = '#/dashboard';
+      setRoute('dashboard');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
 
   // tema: harus jalan SEBELUM efek pembuatan halaman, supaya warna grafik ikut tema terbaru
   useEffect(() => {
