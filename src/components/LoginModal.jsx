@@ -15,7 +15,7 @@ export default function LoginModal({ onClose, onLoggedIn }) {
     setBusy(true);
     try {
       const j = await login(username.trim(), password);
-      onLoggedIn(j.nama || j.username);
+      onLoggedIn(j.nama || j.username, j.role);
     } catch (x) {
       setErr(x.message);
       setBusy(false);

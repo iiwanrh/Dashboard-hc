@@ -14,8 +14,12 @@ CREATE TABLE users (
 );
 
 -- Akun default: username "admin" / password "admin123" — segera ganti password setelah login pertama kali.
+-- Akun default Super Admin: username "superadmin" / password "super123" — segera ganti setelah login pertama kali.
+-- Super Admin HANYA bisa melihat dashboard dan menyetujui/menolak pengajuan (lihat tabel
+-- approval_requests di bawah); ia tidak pernah menambah/mengubah/menghapus data secara langsung.
 INSERT INTO users (username, password, nama, role) VALUES
-('admin', '$2b$10$DOIccLwB/o9yR5nSuU8l0OeuhrTenVvopf/SqOnGQTxX78w5UHQRe', 'Administrator HC', 'admin');
+('admin', '$2b$10$DOIccLwB/o9yR5nSuU8l0OeuhrTenVvopf/SqOnGQTxX78w5UHQRe', 'Administrator HC', 'admin'),
+('superadmin', '$2b$10$4tM5DQsgKa9RRJj288.FU.SXaymyq9dM/F/YoB4xXzXezC9UYLdvC', 'Super Admin', 'superadmin');
 
 DROP TABLE IF EXISTS pengaturan;
 CREATE TABLE pengaturan (id SERIAL PRIMARY KEY, kunci VARCHAR(255) NULL, nilai VARCHAR(255) NULL);
@@ -192,3 +196,22 @@ INSERT INTO pelanggaran (no_plg, tanggal, nik, jenis, kategori, uraian, tindak_l
 INSERT INTO sp (no_sp, nik, jenis_sp, tgl_terbit, masa_berlaku, no_pelanggaran) VALUES
 ('SP-001','EMP008','SP1','2026-10-16',6,'PLG-002'),
 ('SP-002','EMP002','SP1','2025-04-01',6,'Keterlambatan (arsip)');
+
+-- Antrian persetujuan Super Admin: setiap tambah/ubah/hapus data yang diajukan oleh akun
+-- berperan "admin" dicatat di sini (status 'pending') dan BELUM mengubah tabel aslinya.
+-- Baru setelah Super Admin menyetujui (status 'approved') perubahan dieksekusi ke tabel
+-- aslinya oleh /api/approvals; kalau ditolak (status 'rejected') tidak ada perubahan apa pun.
+DROP TABLE IF EXISTS approval_requests;
+CREATE TABLE approval_requests (
+  id SERIAL PRIMARY KEY,
+  table_name VARCHAR(100) NOT NULL,
+  action VARCHAR(20) NOT NULL, -- 'insert' | 'update' | 'delete'
+  record_id INT NULL, -- NULL untuk 'insert', diisi untuk 'update'/'delete'
+  payload JSONB NULL, -- data kolom yang diajukan (kosong untuk 'delete')
+  requested_by VARCHAR(255) NULL,
+  requested_at TIMESTAMP DEFAULT now(),
+  status VARCHAR(20) DEFAULT 'pending', -- 'pending' | 'approved' | 'rejected'
+  reviewed_by VARCHAR(255) NULL,
+  reviewed_at TIMESTAMP NULL,
+  note VARCHAR(255) NULL
+);

@@ -1,23 +1,24 @@
 import { useState, useEffect } from 'react';
 import { whoami } from '../api.js';
 import Dashboard from './Dashboard.jsx';
-import PublicDashboard from './PublicDashboard.jsx';
+
 
 export default function Root() {
   const [ready, setReady] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  // role: 'visitor' (belum login) | 'admin' | 'superadmin'
+  const [role, setRole] = useState('visitor');
   const [userName, setUserName] = useState('');
 
   useEffect(() => {
     (async () => {
       try {
-        const session = await whoami();
-        if (session.login) {
-          setIsAdmin(true);
-          setUserName(session.nama || session.username || '');
+        const j = await whoami();
+        if (j.login) {
+          setRole(j.role || 'admin');
+          setUserName(j.nama || j.username || '');
         }
       } catch {
-        // Jika sesi tidak dapat diperiksa, tampilkan mode pengunjung.
+        // abaikan — tetap tampil sebagai pengunjung (read-only)
       }
       setReady(true);
     })();
@@ -27,16 +28,12 @@ export default function Root() {
     return <p className="empty" style={{ textAlign: 'center', padding: 48, color: '#64748b' }}>Memuat aplikasi…</p>;
   }
 
-  if (isAdmin) {
-    return (
-      <Dashboard
-        isAdmin
-        userName={userName}
-        onLoggedIn={(name) => { setIsAdmin(true); setUserName(name || ''); }}
-        onLoggedOut={() => { setIsAdmin(false); setUserName(''); }}
-      />
-    );
-  }
-
-  return <PublicDashboard onAdminLogin={(name) => { setIsAdmin(true); setUserName(name || ''); }} />;
+  return (
+    <Dashboard
+      role={role}
+      userName={userName}
+      onLoggedIn={(name, r) => { setRole(r || 'admin'); setUserName(name || ''); }}
+      onLoggedOut={() => { setRole('visitor'); setUserName(''); }}
+    />
+  );
 }
