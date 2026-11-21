@@ -2,14 +2,11 @@ import { useState, useEffect } from 'react';
 import { whoami } from '../api.js';
 import Dashboard from './Dashboard.jsx';
 
-// Dashboard sekarang SELALU tampil ke siapa saja (mode pengunjung/read-only).
-// Root hanya memeriksa sekali di awal apakah ada sesi admin yang masih aktif
-// (cookie login tersimpan), supaya tombol edit/hapus langsung muncul tanpa
-// perlu login ulang. Login sendiri sekarang berupa modal, dipicu dari tombol
-// di pojok kanan atas header (lihat Dashboard.jsx / Header.jsx).
+
 export default function Root() {
   const [ready, setReady] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  // role: 'visitor' (belum login) | 'admin' | 'superadmin'
+  const [role, setRole] = useState('visitor');
   const [userName, setUserName] = useState('');
 
   useEffect(() => {
@@ -17,7 +14,7 @@ export default function Root() {
       try {
         const j = await whoami();
         if (j.login) {
-          setIsAdmin(true);
+          setRole(j.role || 'admin');
           setUserName(j.nama || j.username || '');
         }
       } catch {
@@ -33,10 +30,10 @@ export default function Root() {
 
   return (
     <Dashboard
-      isAdmin={isAdmin}
+      role={role}
       userName={userName}
-      onLoggedIn={(name) => { setIsAdmin(true); setUserName(name || ''); }}
-      onLoggedOut={() => { setIsAdmin(false); setUserName(''); }}
+      onLoggedIn={(name, r) => { setRole(r || 'admin'); setUserName(name || ''); }}
+      onLoggedOut={() => { setRole('visitor'); setUserName(''); }}
     />
   );
 }

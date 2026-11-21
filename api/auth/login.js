@@ -21,10 +21,11 @@ export default async function handler(req, res) {
     }
 
     const nama = row.nama || row.username;
-    const token = signSession({ uid: row.id, username: row.username, nama });
+    const role = row.role || 'admin';
+    const token = signSession({ uid: row.id, username: row.username, nama, role });
     setSessionCookie(res, token);
 
-    res.status(200).json({ ok: true, nama, username: row.username });
+    res.status(200).json({ ok: true, nama, username: row.username, role });
   } catch (e) {
     res.status(401).json({ error: e.message });
   }

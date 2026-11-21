@@ -4,9 +4,11 @@ import NotifButton from './NotifButton.jsx';
 // ---------- header + navigasi ----------
 const NAV_MAIN = [{ r: 'dashboard', label: '📊 Dashboard' }, { r: 'recruitment', label: '🧲 Recruitment' }];
 const NAV_OPS = [{ r: 'hc', label: 'Operasional HC' }, { r: 'dinas', label: 'Operasional Dinas dan Tugas' }];
-const NAV_ADM = [{ r: 'administrasi_amsa', label: 'Karyawan PT Amsa' }, { r: 'administrasi_jala', label: 'Karyawan PT Jala' }, { r: 'memo', label: 'Administrasi Memo' }];
+const NAV_ADM = [{ r: 'administrasi_amsa', label: 'Karyawan PT Anugerah Mekanika Sukses Abadi (AMSA)' }, { r: 'administrasi_jala', label: 'Karyawan PT Jala Berikat Nusantara Perkasa (JBNP)' }, { r: 'memo', label: 'Administrasi Memo' }];
 
-export default function Header({ route, isAdmin, userName, theme, onToggleTheme, onLoginClick, onLogout, sel, onSelChange }) {
+export default function Header({ route, role, isAdmin, pendingCount, userName, theme, onToggleTheme, onLoginClick, onLogout, sel, onSelChange }) {
+  const isSuperadmin = role === 'superadmin';
+  const isAdminRole = role === 'admin';
   const [navOpen, setNavOpen] = useState(false);
   const [ddOpen, setDdOpen] = useState(null);
   const barRef = useRef(null);
@@ -56,6 +58,31 @@ export default function Header({ route, isAdmin, userName, theme, onToggleTheme,
     );
   }
 
+  // Daftar nav berbeda menurut role: Super Admin HANYA melihat Dashboard + Approval
+  // (sesuai permintaan "hanya mempunyai akses ke dashboard [dan persetujuan]"); admin
+  // (dan pengunjung) tetap melihat menu lengkap seperti sebelumnya.
+  function NavLinks({ onNavigate, idSuffix }) {
+    if (isSuperadmin) {
+      return (
+        <>
+          <a href="#/dashboard" onClick={onNavigate} className={linkCls('dashboard')}>📊 Dashboard</a>
+          <a href="#/approvals" onClick={onNavigate} className={linkCls('approvals') + ' inline-flex items-center gap-1.5'}>
+            ✅ Approval
+            {pendingCount > 0 && <span className="nav-badge">{pendingCount > 9 ? '9+' : pendingCount}</span>}
+          </a>
+        </>
+      );
+    }
+    return (
+      <>
+        {NAV_MAIN.map((n) => <a key={n.r} href={'#/' + n.r} onClick={onNavigate} className={linkCls(n.r)}>{n.label}</a>)}
+        {isAdminRole && <Dropdown id={'ops' + idSuffix} label="⚙️ Operasional" items={NAV_OPS} />}
+        <Dropdown id={'adm' + idSuffix} label="🗂️ Administrasi" items={NAV_ADM} />
+        <a href="#/er" onClick={onNavigate} className={linkCls('er')}>🤝 Employee Relations</a>
+      </>
+    );
+  }
+
   const DateField = ({ className }) => (
     <label className={'flex items-center gap-2 text-xs ' + className}>
       Tgl. terpilih
@@ -69,7 +96,7 @@ export default function Header({ route, isAdmin, userName, theme, onToggleTheme,
   // Layar lebar (>=1024px) tampil di bar; layar kecil dipindah ke dalam panel menu burger.
   const Actions = ({ className }) => (
     <div className={'items-center gap-2 ' + className}>
-      <NotifButton />
+      {isAdmin && <NotifButton />}
       <button type="button" onClick={onToggleTheme} className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/15 hover:bg-white/25 transition" title={theme === 'dark' ? 'Mode terang' : 'Mode gelap'}>
         {theme === 'dark' ? '☀️' : '🌙'}
       </button>
@@ -81,25 +108,30 @@ export default function Header({ route, isAdmin, userName, theme, onToggleTheme,
           </button>
         </>
       ) : (
-        <button type="button" onClick={onLoginClick} title="Login sebagai admin untuk mengubah data" className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 active:scale-95 transition rounded-lg px-3 py-2 text-sm font-semibold shadow-sm">
-          🔑 <span>Login Admin</span>
+        <button type="button" onClick={onLoginClick} title="Login sebagai admin atau Super Admin" className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 active:scale-95 transition rounded-lg px-3 py-2 text-sm font-semibold shadow-sm">
+          🔑 <span>Login</span>
         </button>
       )}
     </div>
   );
 
   return (
-    <header ref={barRef} className="sticky top-0 z-30 bg-gradient-to-r from-indigo-900 to-indigo-600 text-white shadow-lg">
+    <header
+      ref={barRef}
+      className="sticky top-0 z-30 text-white shadow-lg bg-indigo-800"
+      style={{
+        backgroundImage: "linear-gradient(90deg, rgba(30,27,75,.86), rgba(79,70,229,.80)), url('/branding/jforces.jpg')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
       <div className="flex items-center gap-3 px-4 sm:px-6 py-2.5">
         <a href="#/dashboard" className="flex items-center gap-2 font-bold text-base shrink-0">
           <span className="bg-white text-indigo-700 rounded-lg px-2 py-1 text-sm">HC</span>
           <span className="hidden xs:inline">Human Capital</span>
         </a>
         <nav className="hidden lg:flex items-center gap-1 flex-1 min-w-0">
-          {NAV_MAIN.map((n) => <a key={n.r} href={'#/' + n.r} className={linkCls(n.r)}>{n.label}</a>)}
-          <Dropdown id="ops" label="⚙️ Operasional" items={NAV_OPS} />
-          <Dropdown id="adm" label="🗂️ Administrasi" items={NAV_ADM} />
-          <a href="#/er" className={linkCls('er')}>🤝 Employee Relations</a>
+          <NavLinks idSuffix="" />
         </nav>
         <DateField className="hidden lg:flex shrink-0 ml-2" />
         <Actions className="hidden lg:flex shrink-0 ml-2" />
@@ -109,10 +141,7 @@ export default function Header({ route, isAdmin, userName, theme, onToggleTheme,
       </div>
       {navOpen && (
         <nav className="lg:hidden px-4 pb-3 flex flex-col gap-1 bg-black/10">
-          {NAV_MAIN.map((n) => <a key={n.r} href={'#/' + n.r} onClick={() => setNavOpen(false)} className={linkCls(n.r)}>{n.label}</a>)}
-          <Dropdown id="ops-m" label="⚙️ Operasional" items={NAV_OPS} />
-          <Dropdown id="adm-m" label="🗂️ Administrasi" items={NAV_ADM} />
-          <a href="#/er" onClick={() => setNavOpen(false)} className={linkCls('er')}>🤝 Employee Relations</a>
+          <NavLinks onNavigate={() => setNavOpen(false)} idSuffix="-m" />
           <DateField className="mt-2" />
           <Actions className="flex justify-end mt-2 pt-2 border-t border-white/20" />
         </nav>

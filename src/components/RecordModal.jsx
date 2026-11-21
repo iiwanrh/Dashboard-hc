@@ -20,8 +20,9 @@ export default function RecordModal({ table, id, def, onClose, onSaved }) {
     setSaving(true);
     setErr('');
     try {
-      await api(table, 'POST', values, id);
+      const r = await api(table, 'POST', values, id);
       await onSaved();
+      if (r && r.pending) alert(`Pengajuan ${id ? 'ubah' : 'tambah'} data berhasil dikirim, menunggu persetujuan Super Admin.`);
     } catch (x) {
       setErr(x.message);
       setSaving(false);

@@ -1,6 +1,6 @@
 // Pengganti api.php — CRUD generik untuk semua tabel dashboard.
 import { query } from '../lib/db.js';
-import { requireLogin } from '../lib/auth.js';
+import { requireLogin, getSession } from '../lib/auth.js';
 
 const TABLES = ['pengaturan', 'karyawan', 'manpower', 'lowongan', 'funnel', 'onboarding', 'kehadiran', 'cuti', 'spd', 'honor', 'surat_tugas', 'lembur', 'lembur_status', 'memo', 'pelanggaran', 'sp'];
 
@@ -12,12 +12,50 @@ async function columnsOf(table) {
   return rows.map((r) => r.column_name);
 }
 
+// ---------------------------------------------------------------------------
+// Tampilan pengunjung (belum login admin) hanya boleh melihat: Dashboard (agregat),
+// Recruitment (KPI + Lowongan Aktif + Funnel + chart), Administrasi (KPI +
+// headcount per departemen + daftar nama singkat + memo yang SUDAH TERBIT), dan
+// Employee Relations (KPI + chart saja). Jadi walau endpoint ini "t=all" dan
+// publik (dipakai dashboard pengunjung), kita WAJIB menyaring di server supaya
+// data mentah yang tidak boleh dilihat pengunjung (nama pelamar/pemohon,
+// isi pelanggaran, no SP, isi memo draft, dsb) tidak pernah sampai ke browser —
+// menyembunyikannya hanya di tampilan (UI) saja tidak cukup aman.
+function pick(row, keys) {
+  const o = {};
+  for (const k of keys) o[k] = row[k];
+  return o;
+}
+function filterForVisitor(out) {
+  return {
+    pengaturan: out.pengaturan,
+    karyawan: out.karyawan.map((r) => pick(r, ['id', 'nik', 'nama', 'perusahaan', 'departemen', 'tipe', 'status', 'tgl_masuk', 'tgl_resign', 'berakhir', 'jenis_kontrak'])),
+    manpower: out.manpower.map((r) => pick(r, ['id', 'status'])),
+    lowongan: out.lowongan,
+    funnel: out.funnel,
+    onboarding: out.onboarding.map((r) => pick(r, ['id', 'tgl_onboarding'])),
+    kehadiran: out.kehadiran.map((r) => pick(r, ['id', 'bulan', 'hari_kerja', 'masuk', 'izin_sakit', 'cuti', 'dinas'])),
+    cuti: [],
+    spd: out.spd.map((r) => pick(r, ['id', 'tgl_surat', 'berangkat', 'kembali'])),
+    honor: out.honor.map((r) => pick(r, ['id', 'nominal', 'status'])),
+    surat_tugas: out.surat_tugas.map((r) => pick(r, ['id', 'mulai', 'selesai'])),
+    lembur: [],
+    lembur_status: [],
+    memo: out.memo.map((r) => (r.status === 'Terbit' ? r : pick(r, ['id', 'status', 'tanggal']))),
+    pelanggaran: out.pelanggaran.map((r) => pick(r, ['id', 'tanggal', 'kategori'])),
+    sp: out.sp.map((r) => pick(r, ['id', 'tgl_terbit', 'masa_berlaku'])),
+  };
+}
+
 export default async function handler(req, res) {
   const m = req.method;
-  // Baca data (GET) boleh diakses siapa saja (mode pengunjung / read-only di dashboard).
-  // Tambah/ubah/hapus (POST & DELETE) tetap wajib login sebagai admin.
+  // Baca data (GET) boleh diakses siapa saja (mode pengunjung / read-only di dashboard),
+  // tapi isinya disaring di filterForVisitor() bila belum login.
+  // Tambah/ubah/hapus (POST & DELETE) wajib login — dan HANYA mengajukan ke antrian
+  // approval_requests (lihat bawah), tidak pernah langsung mengubah tabel aslinya.
+  let session = null;
   if (m !== 'GET') {
-    const session = requireLogin(req, res);
+    session = requireLogin(req, res);
     if (!session) return; // requireLogin sudah mengirim 401
   }
 
@@ -31,15 +69,39 @@ export default async function handler(req, res) {
         const { rows } = await query(`SELECT * FROM "${x}" ORDER BY id`);
         out[x] = rows;
       }
-      res.status(200).json(out);
+      const sess = getSession(req);
+      const role = sess ? (sess.role || 'admin') : null;
+      // Super Admin melihat SEMUA pengajuan (untuk disetujui/ditolak); admin hanya
+      // melihat riwayat pengajuannya sendiri (lewat notifikasi); pengunjung tidak melihat apa pun.
+      if (role === 'superadmin') {
+        const { rows } = await query(`SELECT * FROM approval_requests ORDER BY requested_at DESC LIMIT 300`);
+        out.approvals = rows;
+      } else if (role === 'admin') {
+        const { rows } = await query(`SELECT * FROM approval_requests WHERE requested_by = $1 ORDER BY requested_at DESC LIMIT 100`, [sess.username]);
+        out.approvals = rows;
+      } else {
+        out.approvals = [];
+      }
+      res.status(200).json(sess ? out : filterForVisitor(out));
       return;
     }
 
     if (!TABLES.includes(t)) throw new Error('Tabel tidak dikenal');
 
+    const role = session.role || 'admin';
+    // Super Admin tidak pernah mengubah data lewat endpoint ini — perubahan data hanya
+    // boleh terjadi lewat persetujuan di /api/approvals.
+    if (role !== 'admin') {
+      res.status(403).json({ error: 'Super Admin tidak dapat mengubah data secara langsung. Gunakan halaman Approval untuk menyetujui/menolak pengajuan.' });
+      return;
+    }
+
     if (m === 'DELETE') {
-      await query(`DELETE FROM "${t}" WHERE id = $1`, [id]);
-      res.status(200).json({ ok: true });
+      await query(
+        `INSERT INTO approval_requests (table_name, action, record_id, payload, requested_by) VALUES ($1,'delete',$2,NULL,$3)`,
+        [t, id, session.username]
+      );
+      res.status(200).json({ ok: true, pending: true });
       return;
     }
 
@@ -55,18 +117,11 @@ export default async function handler(req, res) {
       const keys = Object.keys(data);
       if (!keys.length) throw new Error('Tidak ada data');
 
-      if (id) {
-        const set = keys.map((c, i) => `"${c}" = $${i + 1}`).join(', ');
-        const values = keys.map((c) => data[c]);
-        values.push(id);
-        await query(`UPDATE "${t}" SET ${set} WHERE id = $${keys.length + 1}`, values);
-      } else {
-        const names = keys.map((c) => `"${c}"`).join(', ');
-        const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
-        const values = keys.map((c) => data[c]);
-        await query(`INSERT INTO "${t}" (${names}) VALUES (${placeholders})`, values);
-      }
-      res.status(200).json({ ok: true });
+      await query(
+        `INSERT INTO approval_requests (table_name, action, record_id, payload, requested_by) VALUES ($1,$2,$3,$4,$5)`,
+        [t, id ? 'update' : 'insert', id || null, JSON.stringify(data), session.username]
+      );
+      res.status(200).json({ ok: true, pending: true });
       return;
     }
 
