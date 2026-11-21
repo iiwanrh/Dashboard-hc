@@ -1,9 +1,6 @@
 // ---------------------------------------------------------------------------
 // Logika inti dashboard: definisi tabel/form, rumus (S), grafik (G), halaman (P).
-// Ini adalah PORTING LANGSUNG dari assets/app.js versi PHP lama — semua rumus,
-// label, dan urutan kolom SENGAJA dipertahankan persis sama supaya angka yang
-// tampil tidak berubah. Yang berubah hanya cara modul ini dimuat (ES module,
-// bukan skrip global) dan sumber library (npm, bukan file vendor lokal).
+
 // ---------------------------------------------------------------------------
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
@@ -13,9 +10,9 @@ import { api } from './api.js';
 export const $ = (s, e = document) => e.querySelector(s);
 export const $$ = (s, e = document) => [...e.querySelectorAll(s)];
 export const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-export const DEPT = ['PPIC', 'Production Assembly', 'General Affairs', 'Finance & Accounting', 'Human Capital', 'Intelegent System Engineering', 'Production Engineering', 'QA & QC', 'Production Fabrication', 'Product Development', 'Design Engineering', 'Procurement', 'Board of Directors (Staff Ahli)', 'Secretary', 'PMO', 'Product Support', 'Office Boy', 'Driver'];
-export const PERUSAHAAN = ['PT Amsa', 'PT Jala'];
-export const L = { tipe: ['Tetap', 'Kontrak', 'PHL'], ks: ['Aktif', 'Resign'], jk: ['PKWT', 'PKWTT', 'HARIAN'], mp: ['Diajukan', 'Pending', 'Diterima', 'Ditolak'], lw: ['Open', 'On Progress', 'Closed'], ob: ['Terjadwal', 'Berlangsung', 'Selesai'], cuti: ['Tahunan', 'Sakit', 'Melahirkan', 'Besar', 'Lainnya'], sc: ['Diajukan', 'Disetujui', 'Ditolak'], hon: ['Belum diajukan', 'Diajukan', 'Dibayar'], hl: ['Hari Kerja', 'Sabtu', 'Minggu', 'Hari Libur'], memo: ['Draft', 'Terbit', 'Arsip'], kat: ['Ringan', 'Sedang', 'Berat'], sp: ['SP1', 'SP2', 'SP3'], gender: ['Laki-laki', 'Perempuan'], pendidikan: ['SMP', 'SMA/SMK', 'D3', 'S1', 'S2', 'S3'] };
+export const DEPT = ['PPIC', 'Production Assembly', 'General Affairs', 'Finance & Accounting', 'Human Capital', 'Intelegent System Engineering', 'Production Engineering', 'QA & QC', 'Production Fabrication', 'Product Development', 'Design Engineering', 'Procurement', 'Board of Directors (Staff Ahli)', 'Secretary', 'PMO', 'Product Support'];
+export const PERUSAHAAN = ['PT Anugerah Mekanika Sukses Abadi (AMSA)', 'PT Jala Berikat Nusantara Perkasa (JBNP)'];
+export const L = { tipe: ['PKWTT', 'PKWT', 'PHL'], ks: ['Aktif', 'Resign'], jk: ['PKWT', 'PKWTT', 'HARIAN'], mp: ['Diajukan', 'Pending', 'Diterima', 'Ditolak'], lw: ['Open', 'On Progress', 'Closed'], ob: ['Terjadwal', 'Berlangsung', 'Selesai'], cuti: ['Tahunan', 'Sakit', 'Melahirkan', 'Besar', 'Lainnya'], sc: ['Diajukan', 'Disetujui', 'Ditolak'], hon: ['Belum diajukan', 'Diajukan', 'Dibayar'], hl: ['Hari Kerja', 'Sabtu', 'Minggu', 'Hari Libur'], memo: ['Draft', 'Terbit', 'Arsip'], kat: ['Ringan', 'Sedang', 'Berat'], sp: ['SP1', 'SP2', 'SP3'], gender: ['Laki-laki', 'Perempuan'], pendidikan: ['SMP', 'SMA/SMK', 'D3', 'S1', 'S2', 'S3'] };
 // ---------- definisi field form (k=kolom DB, l=label, ty: t teks, n angka, d tanggal, m jam, s pilihan, b pilihan+badge, k pilih karyawan)
 const F = (k, l, ty = 't', o) => ({ k, l, ty, o });
 export const T = {
@@ -37,7 +34,7 @@ export const T = {
     sp: [F('no_sp', 'No. SP'), F('nik', 'NIK Karyawan', 'k'), F('jenis_sp', 'Jenis SP', 's', L.sp), F('tgl_terbit', 'Tanggal Terbit', 'd'), F('masa_berlaku', 'Masa Berlaku (bulan)', 'n'), F('no_pelanggaran', 'No. Pelanggaran')]
 };
 // ---------- helper (tema gelap/terang kini dikelola React, lihat App.jsx)
-export let DB = {}, X = {}, SEL = '', Q = [], CH = [], ADMSORT = 'nama', ADMIN = false;
+export let DB = {}, X = {}, SEL = '', Q = [], CH = [], ADMSORT = 'nama', ADMIN = false, ROLE = 'visitor', CANWRITE = false;
 export function setDB(v) { DB = v; }
 export function setSEL(v) { SEL = v; }
 export function setADMSORT(v) { ADMSORT = v; }
@@ -45,6 +42,14 @@ export function setX(v) { X = v; }
 // Mode admin (sudah login) vs mode pengunjung (hanya baca). Dipakai tbl()/admAll()
 // untuk menyembunyikan tombol Tambah/Ubah/Hapus/Impor saat belum login.
 export function setAdmin(v) { ADMIN = v; }
+// ROLE: 'visitor' (belum login) | 'admin' (bisa mengajukan tambah/ubah/hapus — butuh
+// persetujuan Super Admin) | 'superadmin' (hanya melihat dashboard & menyetujui/menolak
+// pengajuan — tidak pernah mengubah data secara langsung). ADMIN = tampilan detail
+// (admin ATAU superadmin, keduanya login); CANWRITE = tombol Tambah/Ubah/Hapus/Impor
+// hanya untuk role 'admin'.
+export function setRole(v) { ROLE = v || 'visitor'; ADMIN = ROLE !== 'visitor'; CANWRITE = ROLE === 'admin'; }
+export const TABLE_LABELS = { pengaturan: 'Pengaturan', karyawan: 'Karyawan', manpower: 'Pengajuan Manpower', lowongan: 'Lowongan', funnel: 'Funnel Kandidat', onboarding: 'Onboarding', kehadiran: 'Kehadiran', cuti: 'Cuti', spd: 'SPD', honor: 'Honor', surat_tugas: 'Surat Tugas', lembur: 'Lembur', lembur_status: 'Status Lembur', memo: 'Memo', pelanggaran: 'Pelanggaran', sp: 'Surat Peringatan (SP)' };
+export const ACT_LABEL = { insert: 'tambah data baru', update: 'ubah data', delete: 'hapus data' };
 export function resetCharts() { CH.forEach(c => c.destroy()); CH = []; Q = []; }
 export function runChartQueue() { Q.forEach(f => f()); }
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -119,10 +124,12 @@ export function S() {
 // ---------- komponen
 export const kpi = (l, v, s, c = 0) => `<div class="kpi k${c}"><small>${l}</small><b>${v}</b><span>${s || ''}</span></div>`, kpis = a => `<div class="kpis">${a.join('')}</div>`;
 export const head = (t, s) => `<div class="ph"><h1>${t}</h1><p>${s}</p></div>`;
+// Banner "selamat datang" khusus halaman Dashboard — judul besar di atas foto/branding J-Forces.
+export const heroHead = (t, s) => `<div class="ph hero"><h1>${t}</h1><p>${s}</p></div>`;
 export const sec = (t, r, b) => `<div class="sh"><h2>${t}</h2><a class="btn p" href="#/${r}">Buka halaman ▶</a></div>${b}`;
 export const col = (t, k) => T[t].find(f => f.k == k);
 export function tbl(t, title, show, o = {}) {
-    const ro = o.ro || !ADMIN; // mode pengunjung (belum login) selalu read-only, apapun pengaturan tabelnya
+    const ro = o.ro || !CANWRITE; // pengunjung & Super Admin selalu read-only — hanya role 'admin' boleh mengajukan perubahan
     const cols = show.map(s => typeof s == 'string' ? col(t, s) : s), rows = o.rows || DB[t];
     const cell = (r, c) => {
         const v = c.c ? c.c(r) : r[c.k];
@@ -132,20 +139,35 @@ export function tbl(t, title, show, o = {}) {
             return '';
         return c.bd || c.ty == 'b' ? bd(v) : c.ty == 'd' ? fd(v) : c.ty == 'm' ? hm(v) : c.ty == 'n' ? (c.rp ? rp(v) : nf(v)) : esc(v);
     };
-    return `<div class="card"><div class="ch"><h3>${title}</h3><input class="q" placeholder="Cari…">${ro ? '' : (o.extra || '')}<button class="btn" data-a="export" data-t="${t}" title="Export ke Excel">⬇ Excel</button>${ro ? '' : `<button class="btn p" data-a="add" data-t="${t}" data-def='${JSON.stringify(o.def || {})}'>＋ Tambah</button>`}</div><div class="tw"><table><thead><tr>${cols.map(c => `<th>${c.l}</th>`).join('')}${ro ? '' : '<th></th>'}</tr></thead><tbody>${rows.map(r => `<tr>${cols.map(c => `<td>${cell(r, c)}</td>`).join('')}${ro ? '' : `<td class="ac"><button data-a="edit" data-t="${t}" data-id="${r.id}" title="Ubah">✎</button><button data-a="del" data-t="${t}" data-id="${r.id}" title="Hapus">🗑</button></td>`}</tr>`).join('') || '<tr><td colspan="99" class="empty">Belum ada data</td></tr>'}</tbody></table></div></div>`;
+    return `<div class="card"><div class="ch"><h3>${title}</h3><input class="q" placeholder="Cari…">${ro ? '' : (o.extra || '')}<button class="btn" data-a="export" data-t="${t}" title="Export ke Excel">⬇ Excel</button>${ro ? '' : `<button class="btn p" data-a="add" data-t="${t}" data-def='${JSON.stringify(o.def || {})}'>＋ Tambah</button>`}</div><div class="tw"><table><thead><tr>${cols.map(c => `<th>${c.l}</th>`).join('')}${ro ? '' : '<th></th>'}</tr></thead><tbody>${rows.map(r => `<tr${o.rowAttr ? ' ' + o.rowAttr(r) : ''}>${cols.map(c => `<td>${cell(r, c)}</td>`).join('')}${ro ? '' : `<td class="ac"><button data-a="edit" data-t="${t}" data-id="${r.id}" title="Ubah">✎</button><button data-a="del" data-t="${t}" data-id="${r.id}" title="Hapus">🗑</button></td>`}</tr>`).join('') || '<tr><td colspan="99" class="empty">Belum ada data</td></tr>'}</tbody></table></div></div>`;
 }
 const PAL = ['#4f46e5', '#06b6d4', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
 Chart.register(ChartDataLabels);
 function themeInk() { const dark = document.documentElement.getAttribute('data-theme') == 'dark'; return { text: dark ? '#cbd5e1' : '#475569', grid: dark ? '#ffffff14' : '#0000000d' }; }
 export function chart(title, type, labels, sets, o = {}) {
     const id = 'c' + Q.length, dn = type == 'doughnut', ink = themeInk();
-    Q.push(() => CH.push(new Chart($('#' + id), { type, data: { labels, datasets: sets.map((s, i) => ({ backgroundColor: dn ? PAL : (s.color || PAL[i]), hoverBackgroundColor: dn ? PAL : (s.color || PAL[i]), borderRadius: 8, borderSkipped: false, barThickness: o.thin ? 14 : undefined, maxBarThickness: 28, ...s })) },
-        options: { responsive: true, maintainAspectRatio: false, indexAxis: o.h ? 'y' : 'x', interaction: { mode: 'nearest', intersect: true },
-            plugins: { legend: { display: dn || sets.length > 1, position: 'bottom', labels: { color: ink.text, usePointStyle: true, boxWidth: 8, padding: 14 } },
-                tooltip: { backgroundColor: '#1e293bf2', padding: 10, cornerRadius: 10, titleFont: { weight: '600' }, displayColors: true, boxPadding: 4 },
-                datalabels: { display: !!o.labels, color: '#fff', font: { weight: '700', size: 11 }, formatter: v => v || '' } },
-            scales: dn ? {} : { x: { stacked: !!o.st, grid: { display: false }, ticks: { color: ink.text } }, y: { stacked: !!o.st, beginAtZero: true, grid: { color: ink.grid }, ticks: { color: ink.text } } } } })));
-    return `<div class="card"><div class="ch"><h3>${title}</h3></div><div class="cv"><canvas id="${id}"></canvas></div></div>`;
+    Q.push(() => {
+        const ctx = $('#' + id).getContext('2d');
+        // Isian gradien halus per dataset (bukan warna flat) — kesan lebih modern & premium.
+        const grad = (hex, horiz) => {
+            if (!hex || dn)
+                return hex;
+            const g = horiz ? ctx.createLinearGradient(0, 0, ctx.canvas.width || 600, 0) : ctx.createLinearGradient(0, 0, 0, ctx.canvas.height || 260);
+            g.addColorStop(0, hex);
+            g.addColorStop(1, hex + 'b3');
+            return g;
+        };
+        CH.push(new Chart(ctx, { type, data: { labels, datasets: sets.map((s, i) => { const c = s.color || PAL[i]; return { backgroundColor: dn ? PAL : grad(c, !!o.h), hoverBackgroundColor: dn ? PAL : c, borderRadius: o.pill ? 999 : 8, borderSkipped: false, barPercentage: o.pill ? .62 : .82, categoryPercentage: .82, barThickness: o.thin ? 14 : undefined, maxBarThickness: o.pill ? 22 : 28, ...s, color: undefined }; }) },
+            options: { responsive: true, maintainAspectRatio: false, indexAxis: o.h ? 'y' : 'x', interaction: { mode: 'nearest', intersect: true },
+                animation: { duration: 850, easing: 'easeOutQuart', delay: (ctx2) => ctx2.type === 'data' ? ctx2.dataIndex * 55 : 0 },
+                onHover: (evt, els) => { if (evt.native?.target) evt.native.target.style.cursor = (o.onBarClick && els.length) ? 'pointer' : 'default'; },
+                onClick: (evt, els) => { if (o.onBarClick && els.length) o.onBarClick(labels[els[0].index], els[0]); },
+                plugins: { legend: { display: dn || sets.length > 1, position: 'bottom', labels: { color: ink.text, usePointStyle: true, boxWidth: 8, padding: 14 } },
+                    tooltip: { backgroundColor: '#1e293bf2', padding: 10, cornerRadius: 10, titleFont: { weight: '600' }, displayColors: true, boxPadding: 4, callbacks: o.tooltipFooter ? { footer: (items) => o.tooltipFooter(items[0]) } : undefined },
+                    datalabels: { display: !!o.labels, color: '#fff', font: { weight: '700', size: 11 }, formatter: v => v || '' } },
+                scales: dn ? {} : { x: { stacked: !!o.st, grid: { display: false }, ticks: { color: ink.text } }, y: { stacked: !!o.st, beginAtZero: true, grid: { color: ink.grid }, ticks: { color: ink.text } } } } }));
+    });
+    return `<div class="card"><div class="ch"><h3>${title}</h3></div><div class="cv"${o.onBarClick ? ' title="Klik batang untuk melihat rinciannya di tabel"' : ''}><canvas id="${id}"></canvas></div></div>`;
 }
 export function chartLine(title, labels, data, color, o = {}) {
     const id = 'c' + Q.length, c = color || '#4f46e5', ink = themeInk(), lo = Math.min(...data), hi = Math.max(...data);
@@ -163,8 +185,8 @@ export function chartLine(title, labels, data, color, o = {}) {
     return `<div class="card"><div class="ch"><h3>${title}</h3></div>${o.note ? `<p style="margin:-4px 0 10px;font-size:12px;color:var(--m)">${o.note}</p>` : ''}<div class="cv"><canvas id="${id}"></canvas></div></div>`;
 }
 const cnts = (a, k, v) => v.map(x => cnt(a, r => r[k] == x));
-function deptRows() {
-    const a = DB.karyawan.filter(k => k.status == 'Aktif'), nmD = k => k.departemen || '(Tanpa departemen)', names = [...new Set(a.map(nmD))];
+function deptRows(co) {
+    const a = DB.karyawan.filter(k => k.status == 'Aktif' && (!co || k.perusahaan == co)), nmD = k => k.departemen || '(Tanpa departemen)', names = [...new Set(a.map(nmD))];
     names.sort((x, y) => { const i = DEPT.indexOf(x), j = DEPT.indexOf(y); return (i < 0 ? 999 : i) - (j < 0 ? 999 : j) || x.localeCompare(y); });
     return names.map(d => { const r = { d }; L.tipe.forEach(t => r[t] = cnt(a, k => nmD(k) == d && k.tipe == t)); r.tot = cnt(a, k => nmD(k) == d); return r; });
 }
@@ -177,11 +199,15 @@ function trendRows(co) {
 }
 export const G = {
     head: () => {
-        const R = deptRows(), d = R.map(r => r.d), TC = { Tetap: '#10b981', Kontrak: '#4f46e5', PHL: '#f59e0b' };
-        return chart('Headcount Aktif per Departemen', 'bar', d, L.tipe.map(t => ({ label: t, color: TC[t], data: R.map(r => r[t]) })), { h: 1, st: 1, labels: 1 });
+        const R = deptRows(), d = R.map(r => r.d), TC = { PKWTT: '#10b981', PKWT: '#4f46e5', PHL: '#f59e0b' }, tot = R.reduce((a, r) => a + r.tot, 0);
+        // Klik salah satu batang → lompat & sorot baris departemen itu di tabel di bawahnya (interaktif).
+        const onBarClick = (label) => { const tr = document.querySelector(`[data-dept="${CSS.escape(label)}"]`); if (!tr)
+            return; tr.scrollIntoView({ behavior: 'smooth', block: 'center' }); tr.classList.remove('row-flash'); void tr.offsetWidth; tr.classList.add('row-flash'); };
+        const tooltipFooter = (item) => { const r = R[item.dataIndex]; return r && tot ? `${(r.tot / tot * 100).toFixed(1)}% dari total ${nf(tot)} karyawan aktif` : ''; };
+        return chart('Headcount Aktif per Departemen', 'bar', d, L.tipe.map(t => ({ label: t, color: TC[t], data: R.map(r => r[t]) })), { h: 1, st: 1, labels: 1, pill: 1, onBarClick, tooltipFooter });
     },
     headTbl: () => {
-        const R = deptRows(), tot = { d: 'TOTAL', Tetap: 0, Kontrak: 0, PHL: 0, tot: 0, all: 1 };
+        const R = deptRows(), tot = { d: 'TOTAL', PKWTT: 0, PKWT: 0, PHL: 0, tot: 0, all: 1 };
         R.forEach(r => { L.tipe.forEach(t => tot[t] += r[t]); tot.tot += r.tot; });
         const B = (r, v) => r.all ? `<b>${v}</b>` : v;
         return tbl('headcount_departemen', 'Tabel Headcount Aktif per Departemen', [
@@ -189,7 +215,7 @@ export const G = {
             ...L.tipe.map(t => ({ l: t, raw: 1, c: r => B(r, nf(r[t])) })),
             { l: 'Total', raw: 1, c: r => B(r, nf(r.tot)) },
             { l: '% dari Total', raw: 1, c: r => B(r, tot.tot ? (r.tot / tot.tot * 100).toFixed(1) + '%' : '0%') }
-        ], { ro: 1, rows: [...R, tot] });
+        ], { ro: 1, rows: [...R, tot], rowAttr: r => r.all ? '' : `data-dept="${esc(r.d)}"` });
     },
     headTrend: () => {
         const R = trendRows();
@@ -209,15 +235,15 @@ export const G = {
     headBlock: () => `<div class="g">${G.head()}${G.headTrend()}</div><div class="g">${G.headTbl()}${G.trendTbl()}</div>`,
     // ---- headcount per perusahaan (PT Amsa vs PT Jala)
     headCo: () => {
-        const TC = { Tetap: '#10b981', Kontrak: '#4f46e5', PHL: '#f59e0b' }, A = PERUSAHAAN.map(c => admStats(c));
-        return chart('Headcount Aktif per Perusahaan', 'bar', PERUSAHAAN, L.tipe.map(t => ({ label: t, color: TC[t], data: A.map(a => a[t]) })), { st: 1, labels: 1 });
+        const TC = { PKWTT: '#10b981', Kontrak: '#4f46e5', PHL: '#f59e0b' }, A = PERUSAHAAN.map(c => admStats(c));
+        return chart('Headcount Aktif per Perusahaan', 'bar', PERUSAHAAN, L.tipe.map(t => ({ label: t, color: TC[t], data: A.map(a => a[t]) })), { st: 1, labels: 1, pill: 1 });
     },
     headCoTrend: () => {
         const CC = ['#4f46e5', '#f59e0b', '#10b981', '#ef4444'], R = PERUSAHAAN.map(c => trendRows(c));
         return chart('Tren Headcount Aktif per Perusahaan — 12 Bulan Terakhir', 'line', R[0].map(r => r.label), PERUSAHAAN.map((c, i) => ({ label: c, color: CC[i % CC.length], data: R[i].map(r => r.akhir), borderColor: CC[i % CC.length], backgroundColor: CC[i % CC.length], tension: .35, borderWidth: 3, pointRadius: 4, fill: false })));
     },
     headCoTbl: () => {
-        const R = PERUSAHAAN.map(c => ({ c, ...admStats(c) })), tot = { c: 'TOTAL', Tetap: 0, Kontrak: 0, PHL: 0, aktif: 0, all: 1 };
+        const R = PERUSAHAAN.map(c => ({ c, ...admStats(c) })), tot = { c: 'TOTAL', PKWTT: 0, Kontrak: 0, PHL: 0, aktif: 0, all: 1 };
         R.forEach(r => { L.tipe.forEach(t => tot[t] += r[t]); tot.aktif += r.aktif; });
         const B = (r, v) => r.all ? `<b>${v}</b>` : v;
         return tbl('headcount_perusahaan', 'Tabel Headcount Aktif per Perusahaan', [
@@ -228,6 +254,9 @@ export const G = {
         ], { ro: 1, rows: [...R, tot] });
     },
     headCoBlock: () => `<div class="g">${G.headCo()}${G.headCoTrend()}</div><div class="g">${G.headCoTbl()}</div>`,
+    // Donat porsi total headcount aktif per perusahaan — pelengkap chart batang bertumpuk
+    // di atas supaya perbandingan "besar kecilnya" tiap perusahaan langsung terlihat.
+    headCoShare: () => { const A = PERUSAHAAN.map(c => admStats(c)); return chart('Porsi Headcount Aktif per Perusahaan', 'doughnut', PERUSAHAAN, [{ data: A.map(a => a.aktif) }], { labels: 1 }); },
     funnel: () => chart('Funnel Kandidat per Tahap', 'bar', DB.funnel.map(r => r.tahap), [{ label: 'Kandidat', data: DB.funnel.map(r => +r.jumlah) }], { h: 1 }),
     mp: () => chart('Status Pengajuan Manpower', 'doughnut', L.mp, [{ data: cnts(DB.manpower, 'status', L.mp) }]),
     add: () => chart('Penambahan Karyawan per Bulan', 'bar', MON, [{ label: 'Penambahan', data: MON.map((_, i) => cnt(DB.karyawan, k => k.tgl_masuk && k.tgl_masuk.slice(0, 7) == X.y + '-' + String(i + 1).padStart(2, '0'))) }]),
@@ -246,6 +275,23 @@ export const G = {
 // kolom tabel Administrasi (per perusahaan): + Jenis Kelamin, Usia (otomatis), Pendidikan Terakhir, Tgl. Tetap
 const adm = (t, co) => tbl('karyawan', 'Karyawan ' + t, ['nik', 'nama', 'departemen', 'jenis_kelamin', { l: 'Usia', c: r => usia(r.tanggal_lahir) }, 'pendidikan', 'tgl_masuk', ...(t == 'Kontrak' ? ['mulai_kontrak', 'berakhir'] : ['tanggal_tetap']), 'tgl_resign', 'status'], { rows: DB.karyawan.filter(k => k.tipe == t && (!co || k.perusahaan == co)), def: { tipe: t, status: 'Aktif', perusahaan: co || '' } });
 const nama = { l: 'Nama', c: r => nm(r.nik) };
+// ---------- versi TAMPILAN PENGUNJUNG (belum login admin) dari halaman Administrasi:
+// hanya tabel headcount aktif per departemen (per perusahaan), dan daftar karyawan
+// yang HANYA menampilkan NIK, Nama, Departemen (kolom lain disembunyikan).
+function deptTblCo(co) {
+    const R = deptRows(co), tot = { d: 'TOTAL', Tetap: 0, Kontrak: 0, PHL: 0, tot: 0, all: 1 };
+    R.forEach(r => { L.tipe.forEach(t => tot[t] += r[t]); tot.tot += r.tot; });
+    const B = (r, v) => r.all ? `<b>${v}</b>` : v;
+    return tbl('headcount_departemen_' + co, 'Tabel Headcount Aktif per Departemen — ' + co, [
+        { l: 'Departemen', raw: 1, c: r => B(r, esc(r.d)) },
+        ...L.tipe.map(t => ({ l: t, raw: 1, c: r => B(r, nf(r[t])) })),
+        { l: 'Total', raw: 1, c: r => B(r, nf(r.tot)) }
+    ], { ro: 1, rows: [...R, tot] });
+}
+function admAllSimple(co) {
+    const rows = [...DB.karyawan.filter(k => !co || k.perusahaan == co)].sort((a, b) => sv(a.nama).localeCompare(sv(b.nama)));
+    return tbl('karyawan', 'Daftar Nama Karyawan — ' + co, ['nik', 'nama', 'departemen'], { ro: 1, rows });
+}
 // ---------- daftar gabungan semua jenis karyawan (per perusahaan) + sort + impor Excel
 const sv = v => String(v ?? ''), tpIdx = t => { const i = L.tipe.indexOf(t); return i < 0 ? 99 : i; };
 const ADMSORTERS = {
@@ -265,17 +311,25 @@ function admAll(co) {
     const title = co ? 'Semua Karyawan — ' + co : 'Semua Karyawan (Tetap · Kontrak · PHL)';
     return `<div class="card"><div class="ch"><h3>${title}</h3><input class="q" placeholder="Cari…">
   <select id="admSortSel" class="btn">${opt('nama', 'Urutkan: Nama (A-Z)')}${opt('status', 'Urutkan: Status')}${opt('tipe', 'Urutkan: Tipe')}${opt('departemen', 'Urutkan: Departemen')}${opt('tgl_masuk', 'Urutkan: Tgl Masuk (terbaru)')}</select>
-  ${ADMIN ? `<label class="btn p imp" title="Impor daftar karyawan dari file Excel">⬆ Impor Excel<input type="file" id="impFile" accept=".xlsx,.xls,.csv" hidden></label>
+  ${CANWRITE ? `<label class="btn p imp" title="Impor daftar karyawan dari file Excel">⬆ Impor Excel<input type="file" id="impFile" accept=".xlsx,.xls,.csv" hidden></label>
   <button class="btn" data-a="tpl" data-t="karyawan" title="Unduh template Excel untuk impor">⬇ Template</button>` : ''}
   <button class="btn" data-a="export" data-t="${co ? 'karyawan_' + co.replace(/\s+/g, '_') : 'semua_karyawan'}">⬇ Export Excel</button>
-  ${ADMIN ? `<button class="btn p" data-a="add" data-t="karyawan" data-def='${JSON.stringify({ status: 'Aktif', perusahaan: co || '' })}'>＋ Tambah</button>` : ''}</div>
-  <div class="tw"><table><thead><tr>${cols.map(c => `<th>${c.l}</th>`).join('')}${ADMIN ? '<th></th>' : ''}</tr></thead><tbody>${rows.map(r => `<tr>${cols.map(c => `<td>${cell(r, c)}</td>`).join('')}${ADMIN ? `<td class="ac"><button data-a="edit" data-t="karyawan" data-id="${r.id}" title="Ubah">✎</button><button data-a="del" data-t="karyawan" data-id="${r.id}" title="Hapus">🗑</button></td>` : ''}</tr>`).join('') || '<tr><td colspan="99" class="empty">Belum ada data</td></tr>'}</tbody></table></div></div>`;
+  ${CANWRITE ? `<button class="btn p" data-a="add" data-t="karyawan" data-def='${JSON.stringify({ status: 'Aktif', perusahaan: co || '' })}'>＋ Tambah</button>` : ''}</div>
+  <div class="tw"><table><thead><tr>${cols.map(c => `<th>${c.l}</th>`).join('')}${CANWRITE ? '<th></th>' : ''}</tr></thead><tbody>${rows.map(r => `<tr>${cols.map(c => `<td>${cell(r, c)}</td>`).join('')}${CANWRITE ? `<td class="ac"><button data-a="edit" data-t="karyawan" data-id="${r.id}" title="Ubah">✎</button><button data-a="del" data-t="karyawan" data-id="${r.id}" title="Hapus">🗑</button></td>` : ''}</tr>`).join('') || '<tr><td colspan="99" class="empty">Belum ada data</td></tr>'}</tbody></table></div></div>`;
 }
 // isi halaman Administrasi per perusahaan (PT Amsa / PT Jala)
 function admPageBody(co) {
     const st = co == 'PT Jala' ? X.jala : X.amsa;
+    const kpisBlock = kpis([kpi('Karyawan tetap', st.Tetap), kpi('Karyawan kontrak', st.Kontrak, '', 1), kpi('PHL', st.PHL, '', 2), kpi('Total aktif', st.aktif, '', 3), kpi('Resign (total)', st.resign, '', 4), kpi('Kontrak segera berakhir', st.segera, 'Sisa ≤ 30 hari', 5)]);
+    // Tampilan pengunjung (belum login admin): hanya KPI, tabel headcount aktif per
+    // departemen, dan daftar nama karyawan (NIK/Nama/Departemen saja) — detail lain
+    // (tanggal lahir, pendidikan, tanggal kontrak, dll) disembunyikan.
+    if (!ADMIN) {
+        return head('Karyawan ' + co, 'Ringkasan headcount dan daftar nama karyawan untuk ' + co + '.') +
+            kpisBlock + deptTblCo(co) + admAllSimple(co);
+    }
     return head('Karyawan ' + co, 'Daftar karyawan Tetap, Kontrak, dan PHL untuk ' + co + ' (termasuk trainee).') +
-        kpis([kpi('Karyawan tetap', st.Tetap), kpi('Karyawan kontrak', st.Kontrak, '', 1), kpi('PHL', st.PHL, '', 2), kpi('Total aktif', st.aktif, '', 3), kpi('Resign (total)', st.resign, '', 4), kpi('Kontrak segera berakhir', st.segera, 'Sisa ≤ 30 hari', 5)]) +
+        kpisBlock +
         `<div class="g w">${adm('Tetap', co)}${adm('Kontrak', co)}${adm('PHL', co)}</div>` + admAll(co);
 }
 export function exportTable(card, filename) {
@@ -446,12 +500,24 @@ export async function importKaryawan(file, mode = 'karyawan') {
     }
     return { baru, update, errors, total: rows.length };
 }
-export const importSummary = r => `Impor selesai.\n• Ditambahkan: ${r.baru}\n• Diperbarui: ${r.update}\n• Gagal/dilewati: ${r.errors.length}` + (r.errors.length ? '\n\n' + r.errors.slice(0, 8).join('\n') + (r.errors.length > 8 ? `\n… dan ${r.errors.length - 8} lainnya` : '') : '');
+export const importSummary = r => `Impor diajukan, menunggu persetujuan Super Admin.\n• Pengajuan tambah: ${r.baru}\n• Pengajuan ubah: ${r.update}\n• Gagal/dilewati: ${r.errors.length}` + (r.errors.length ? '\n\n' + r.errors.slice(0, 8).join('\n') + (r.errors.length > 8 ? `\n… dan ${r.errors.length - 8} lainnya` : '') : '');
 // ---------- notifikasi
 export function notifList() {
     if (!DB.karyawan)
         return []; // data belum selesai dimuat dari server — jangan hitung dulu
+    if (!ADMIN)
+        return []; // notifikasi menyebut nama karyawan & detail internal — hanya untuk admin/superadmin
+    // Super Admin hanya mengurus persetujuan perubahan data, bukan operasional sehari-hari —
+    // jadi notifikasinya hanya seputar pengajuan yang menunggu keputusan.
+    if (ROLE == 'superadmin') {
+        const pend = cnt(DB.approvals || [], r => r.status == 'pending');
+        return pend ? [{ level: 'in', text: `${pend} pengajuan perubahan data menunggu persetujuan Anda`, href: '#/approvals' }] : [];
+    }
     const n = [];
+    (DB.approvals || []).filter(r => r.status != 'pending').slice(0, 5).forEach(r => {
+        const ok = r.status == 'approved';
+        n.push({ level: ok ? 'in' : 'er', text: `Pengajuan ${ACT_LABEL[r.action] || r.action} pada ${TABLE_LABELS[r.table_name] || r.table_name} telah ${ok ? 'disetujui' : 'ditolak'} Super Admin${r.note ? ' — ' + r.note : ''}`, href: '#/dashboard' });
+    });
     DB.karyawan.filter(k => k.tipe == 'Kontrak').forEach(k => {
         const st = kst(k), href = '#/' + (k.perusahaan == 'PT Jala' ? 'administrasi_jala' : 'administrasi_amsa');
         if (st == 'Segera Berakhir')
@@ -472,23 +538,36 @@ export function notifList() {
 }
 // ---------- halaman
 export const P = {
-    dashboard: () => head('Dashboard Human Capital', 'Ringkasan seluruh halaman. Seluruh angka dan grafik terhubung otomatis ke database dan mengikuti tanggal terpilih.') +
-        kpis([kpi('Karyawan aktif', X.aktif, 'Tetap + kontrak + PHL'), kpi('Lowongan aktif', X.lw, 'Open & On Progress', 1), kpi('Kehadiran (periode)', (X.hadir * 100).toFixed(1) + '%', 'Masuk ÷ (basis × hari kerja)', 3), kpi('SPD berjalan', X.spdJalan, 'Surat dinas aktif', 2), kpi('SP berlaku', X.spOk, 'Masih dalam masa berlaku', 4), kpi('Memo draft', X.draft, 'Belum diterbitkan', 5)]) +
-        sec('Recruitment', 'recruitment', kpis([kpi('Manpower diterima', X.mpOk), kpi('Lowongan aktif', X.lw, '', 1), kpi('Total pelamar', X.pel, '', 2), kpi('Kandidat diproses', X.proses, '', 3), kpi('Kandidat diterima', X.fnOk, '', 4), kpi('Onboarding (thn ini)', X.onb, '', 5)]) + `<div class="g">${G.funnel()}${G.mp()}${G.add()}</div>`) +
-        sec('Operasional HC (Kehadiran & Cuti)', 'hc', kpis([kpi('Rata-rata kehadiran', (X.hadir * 100).toFixed(1) + '%'), kpi('Karyawan masuk', nf(X.masuk), 'orang-hari', 1), kpi('Izin / sakit', nf(X.izin), 'orang-hari', 2), kpi('Cuti', nf(X.cuti), 'orang-hari', 3), kpi('Dinas luar kota', nf(X.dinas), 'orang-hari', 4), kpi('Resign (periode)', X.resignP, '', 5)]) + `<div class="g">${G.hadir()}${G.kehadiranRinci()}</div>`) +
-        sec('Operasional Dinas dan Tugas', 'dinas', kpis([kpi('SPD berjalan', X.spdJalan), kpi('SPD tahun ini', X.spdTahun, '', 1), kpi('SPD bulan ini', X.spdBulan, '', 2), kpi('Surat tugas (total)', X.st, '', 3), kpi('Surat tugas aktif', X.stAktif, '', 4), kpi('Honor dibayar', rp(X.h2), '', 5)]) + `<div class="g">${G.honor()}</div>`) +
+    // Banner "Welcome" + foto background: khusus tampilan PENGUNJUNG (belum login).
+    // Begitu login sebagai admin/Super Admin, tampilan kembali ke judul polos biasa —
+    // dan baris KPI ringkasan paling atas (sebelum Recruitment) hanya muncul untuk mereka.
+    dashboard: () => (ADMIN
+        ? head('Dashboard', 'Ringkasan seluruh halaman. Seluruh angka dan grafik terhubung otomatis ke database dan mengikuti tanggal terpilih.')
+        : heroHead('Welcome To Human Capital Dashboard Amsa Reformasi', 'Ringkasan seluruh halaman. Seluruh angka dan grafik terhubung otomatis ke database dan mengikuti tanggal terpilih.')) +
+        (ADMIN ? kpis([kpi('Karyawan aktif', X.aktif, 'Tetap + kontrak + PHL'), kpi('Lowongan aktif', X.lw, 'Open & On Progress', 1), kpi('Kehadiran (periode)', (X.hadir * 100).toFixed(1) + '%', 'Masuk ÷ (basis × hari kerja)', 3), kpi('SPD berjalan', X.spdJalan, 'Surat dinas aktif', 2), kpi('SP berlaku', X.spOk, 'Masih dalam masa berlaku', 4), kpi('Memo draft', X.draft, 'Belum diterbitkan', 5)]) : '') +
+        sec('Recruitment', 'recruitment', kpis([kpi('Manpower diterima', X.mpOk), kpi('Lowongan aktif', X.lw, '', 1), kpi('Total pelamar', X.pel, '', 2), kpi('Kandidat diproses', X.proses, '', 3), kpi('Kandidat diterima', X.fnOk, '', 4), kpi('Onboarding (thn ini)', X.onb, '', 5)]) + `<div class="g"><div>${tbl('funnel', 'Funnel Kandidat (isi jumlah manual)', ['tahap', 'jumlah'])}</div>${G.funnel()}${G.mp()}</div>`) +
+        sec('Operasional HC (Kehadiran & Cuti)', 'hc', kpis([kpi('Rata-rata kehadiran', (X.hadir * 100).toFixed(1) + '%'), kpi('Karyawan masuk', nf(X.masuk), 'orang-hari', 1), kpi('Izin / sakit', nf(X.izin), 'orang-hari', 2), kpi('Cuti', nf(X.cuti), 'orang-hari', 3), kpi('Dinas luar kota', nf(X.dinas), 'orang-hari', 4), kpi('Resign (periode)', X.resignP, '', 5)])) +
         sec('Administrasi — PT Amsa', 'administrasi_amsa', kpis([kpi('Karyawan tetap', X.amsa.Tetap), kpi('Karyawan kontrak', X.amsa.Kontrak, '', 1), kpi('PHL', X.amsa.PHL, '', 2), kpi('Total aktif', X.amsa.aktif, '', 3), kpi('Resign (total)', X.amsa.resign, '', 4), kpi('Kontrak segera berakhir', X.amsa.segera, 'Sisa ≤ 30 hari', 5)])) +
         sec('Administrasi — PT Jala', 'administrasi_jala', kpis([kpi('Karyawan tetap', X.jala.Tetap), kpi('Karyawan kontrak', X.jala.Kontrak, '', 1), kpi('PHL', X.jala.PHL, '', 2), kpi('Total aktif', X.jala.aktif, '', 3), kpi('Resign (total)', X.jala.resign, '', 4), kpi('Kontrak segera berakhir', X.jala.segera, 'Sisa ≤ 30 hari', 5)])) +
-        `<div class="sh"><h2>Headcount Aktif per Departemen</h2></div>${G.headBlock()}` +
-        `<div class="sh"><h2>Headcount Aktif per Perusahaan</h2></div>${G.headCoBlock()}` +
+        `<div class="sh"><h2>📊 Headcount Aktif per Departemen</h2></div><div class="g">${G.head()}${G.headTbl()}</div>` +
+        `<div class="sh"><h2>🏢 Headcount Aktif per Perusahaan</h2></div><div class="g">${G.headCo()}${G.headCoShare()}</div><div class="g">${G.headCoTbl()}</div>` +
         sec('Administrasi Memo', 'memo', kpis([kpi('Total memo', X.memo), kpi('Memo terbit', X.terbit, '', 3), kpi('Memo draft', X.draft, '', 2), kpi('Memo bulan ini', X.memoB, '', 1)]) + `<div class="g">${G.memo()}</div>`) +
         sec('Employee Relations', 'er', kpis([kpi('Pelanggaran (thn ini)', X.plgY), kpi('Pelanggaran berat', X.Berat, '', 4), kpi('SP berlaku', X.spOk, '', 2), kpi('SP kadaluarsa', X.spEx, '', 5), kpi('Pelanggaran ringan', X.Ringan, '', 1), kpi('Pelanggaran sedang', X.Sedang, '', 3)]) + `<div class="g">${G.sp()}${G.plg()}</div>`),
-    recruitment: () => head('Recruitment', 'Pengajuan manpower, lowongan aktif, funnel kandidat, onboarding, dan penambahan karyawan.') +
-        kpis([kpi('Manpower diterima', X.mpOk), kpi('Lowongan aktif', X.lw, '', 1), kpi('Total pelamar', X.pel, '', 2), kpi('Kandidat diproses', X.proses, '', 3), kpi('Kandidat diterima', X.fnOk, '', 4), kpi('Onboarding (thn ini)', X.onb, '', 5)]) +
-        tbl('manpower', 'Pengajuan Manpower', ['no_pengajuan', 'tgl_pengajuan', 'departemen', 'posisi', 'jumlah', 'alasan', 'pemohon', 'status', 'tgl_keputusan']) +
-        tbl('lowongan', 'Lowongan Aktif', ['posisi', 'departemen', 'tgl_buka', 'kebutuhan', 'pelamar', 'diterima', 'status', 'target_selesai', { l: 'Progres Hire', raw: 1, c: r => { const p = r.kebutuhan > 0 ? Math.round(r.diterima / r.kebutuhan * 100) : 0; return `<span class="pb"><i style="width:${p}%"></i></span>${p}%`; } }]) +
-        `<div class="g"><div>${tbl('funnel', 'Funnel Kandidat (isi jumlah manual)', ['tahap', 'jumlah'])}</div>${G.funnel()}${G.mp()}</div>` +
-        tbl('onboarding', 'Onboarding Karyawan Baru', ['nama', 'posisi', 'divisi', 'tgl_onboarding', 'tgl_mulai', 'pj', 'status', 'keterangan']) + `<div class="g">${G.add()}</div>`,
+    recruitment: () => {
+        const kpiRow = kpis([kpi('Manpower diterima', X.mpOk), kpi('Lowongan aktif', X.lw, '', 1), kpi('Total pelamar', X.pel, '', 2), kpi('Kandidat diproses', X.proses, '', 3), kpi('Kandidat diterima', X.fnOk, '', 4), kpi('Onboarding (thn ini)', X.onb, '', 5)]);
+        const lowonganTbl = tbl('lowongan', 'Lowongan Aktif', ['posisi', 'departemen', 'tgl_buka', 'kebutuhan', 'pelamar', 'diterima', 'status', 'target_selesai', { l: 'Progres Hire', raw: 1, c: r => { const p = r.kebutuhan > 0 ? Math.round(r.diterima / r.kebutuhan * 100) : 0; return `<span class="pb"><i style="width:${p}%"></i></span>${p}%`; } }]);
+        const funnelBlock = `<div class="g"><div>${tbl('funnel', 'Funnel Kandidat (isi jumlah manual)', ['tahap', 'jumlah'])}</div>${G.funnel()}${G.mp()}</div>`;
+        // Tampilan pengunjung: KPI, Lowongan Aktif, Funnel, dan grafik/chart saja —
+        // tabel Pengajuan Manpower dan Onboarding (memuat nama pemohon/karyawan baru) disembunyikan.
+        if (!ADMIN) {
+            return head('Recruitment', 'Lowongan aktif, funnel kandidat, dan ringkasan recruitment.') + kpiRow + lowonganTbl + funnelBlock;
+        }
+        return head('Recruitment', 'Pengajuan manpower, lowongan aktif, funnel kandidat, onboarding, dan penambahan karyawan.') +
+            kpiRow +
+            tbl('manpower', 'Pengajuan Manpower', ['no_pengajuan', 'tgl_pengajuan', 'departemen', 'posisi', 'jumlah', 'alasan', 'pemohon', 'status', 'tgl_keputusan']) +
+            lowonganTbl + funnelBlock +
+            tbl('onboarding', 'Onboarding Karyawan Baru', ['nama', 'posisi', 'divisi', 'tgl_onboarding', 'tgl_mulai', 'pj', 'status', 'keterangan']) + `<div class="g">${G.add()}</div>`;
+    },
     hc: () => head('Operasional HC', 'Rekapan bulanan kehadiran, izin/sakit, cuti, dan dinas luar kota.') +
         kpis([kpi('Rata-rata kehadiran', (X.hadir * 100).toFixed(1) + '%'), kpi('Karyawan masuk', nf(X.masuk), 'orang-hari', 1), kpi('Izin / sakit', nf(X.izin), '', 2), kpi('Cuti', nf(X.cuti), '', 3), kpi('Dinas luar kota', nf(X.dinas), '', 4), kpi('Resign (periode)', X.resignP, '', 5), kpi('Total hari kerja', X.hari), kpi('Karyawan aktif (basis)', X.basis, 'Ubah di tabel Pengaturan', 1)]) +
         `<div class="g w">${G.hadir()}${G.kehadiranRinci()}</div>` +
@@ -501,12 +580,45 @@ export const P = {
         `<div class="g w">${tbl('honor', 'C. Surat Upah Perjalanan Dinas (Honor)', ['no_spd', { l: 'Nama', c: r => nm((DB.spd.find(s => s.no_surat == r.no_spd) || {}).nik) }, { l: 'Nominal', ty: 'n', rp: 1, c: r => r.nominal }, 'tgl_pengajuan', 'status', 'tgl_dibayar', 'keterangan'])}${G.honor()}</div>`,
     administrasi_amsa: () => admPageBody('PT Amsa'),
     administrasi_jala: () => admPageBody('PT Jala'),
-    memo: () => head('Administrasi Memo', 'Memo internal perusahaan. Ubah status (Draft / Terbit / Arsip) lewat tombol ubah.') +
+    // Memo: pengunjung hanya melihat memo yang berstatus "Terbit" untuk semua karyawan;
+    // Draft/Arsip (dan isinya) hanya untuk admin.
+    memo: () => head('Administrasi Memo', ADMIN ? 'Memo internal perusahaan. Ubah status (Draft / Terbit / Arsip) lewat tombol ubah.' : 'Memo internal perusahaan yang sudah terbit.') +
         kpis([kpi('Total memo', X.memo), kpi('Memo terbit', X.terbit, '', 3), kpi('Memo draft', X.draft, '', 2), kpi('Memo bulan ini', X.memoB, '', 1)]) +
-        `<div class="g w">${tbl('memo', 'A. Daftar Memo', ['no_memo', 'tanggal', 'perihal', 'tujuan', 'dari', 'status', 'keterangan'])}${G.memo()}</div>`,
-    er: () => head('Employee Relations', 'Pelanggaran karyawan dan surat peringatan (SP).') +
-        kpis([kpi('Pelanggaran (thn ini)', X.plgY), kpi('Pelanggaran berat', X.Berat, '', 4), kpi('SP berlaku', X.spOk, '', 2), kpi('SP kadaluarsa', X.spEx, '', 5), kpi('Pelanggaran ringan', X.Ringan, '', 1), kpi('Pelanggaran sedang', X.Sedang, '', 3)]) +
-        tbl('pelanggaran', 'A. Daftar Pelanggaran', ['no_plg', 'tanggal', 'nik', nama, 'jenis', 'kategori', 'uraian', 'tindak_lanjut']) +
-        tbl('sp', 'B. Surat Peringatan (SP)', ['no_sp', 'nik', nama, { l: 'Departemen', c: r => (DB.karyawan.find(k => k.nik == r.nik) || {}).departemen }, 'jenis_sp', 'tgl_terbit', 'masa_berlaku', { l: 'Batas Berlaku', ty: 'd', c: r => spx(r).b }, { l: 'Sisa Hari', c: r => spx(r).s }, { l: 'Status', bd: 1, c: r => spx(r).st }, 'no_pelanggaran']) +
-        `<div class="g">${G.sp()}${G.plg()}</div>`
+        `<div class="g w">${tbl('memo', 'A. Daftar Memo' + (ADMIN ? '' : ' (Terbit)'), ['no_memo', 'tanggal', 'perihal', 'tujuan', 'dari', 'status', 'keterangan'], ADMIN ? {} : { ro: 1, rows: DB.memo.filter(r => r.status == 'Terbit') })}${G.memo()}</div>`,
+    // Employee Relations: pengunjung hanya melihat KPI + chart (tanpa tabel Pelanggaran/SP yang memuat nama karyawan).
+    er: () => {
+        const kpiRow = kpis([kpi('Pelanggaran (thn ini)', X.plgY), kpi('Pelanggaran berat', X.Berat, '', 4), kpi('SP berlaku', X.spOk, '', 2), kpi('SP kadaluarsa', X.spEx, '', 5), kpi('Pelanggaran ringan', X.Ringan, '', 1), kpi('Pelanggaran sedang', X.Sedang, '', 3)]);
+        const chartBlock = `<div class="g">${G.sp()}${G.plg()}</div>`;
+        if (!ADMIN) {
+            return head('Employee Relations', 'Ringkasan pelanggaran karyawan dan surat peringatan (SP).') + kpiRow + chartBlock;
+        }
+        return head('Employee Relations', 'Pelanggaran karyawan dan surat peringatan (SP).') + kpiRow +
+            tbl('pelanggaran', 'A. Daftar Pelanggaran', ['no_plg', 'tanggal', 'nik', nama, 'jenis', 'kategori', 'uraian', 'tindak_lanjut']) +
+            tbl('sp', 'B. Surat Peringatan (SP)', ['no_sp', 'nik', nama, { l: 'Departemen', c: r => (DB.karyawan.find(k => k.nik == r.nik) || {}).departemen }, 'jenis_sp', 'tgl_terbit', 'masa_berlaku', { l: 'Batas Berlaku', ty: 'd', c: r => spx(r).b }, { l: 'Sisa Hari', c: r => spx(r).s }, { l: 'Status', bd: 1, c: r => spx(r).st }, 'no_pelanggaran']) +
+            chartBlock;
+    },
+    // ---------- halaman Approval (khusus Super Admin): setiap data yang ditambah, diubah,
+    // atau dihapus oleh admin masuk sebagai pengajuan di sini dan BARU berlaku di database
+    // setelah Super Admin menyetujuinya. Admin biasa melihat status pengajuannya lewat notifikasi.
+    approvals: () => {
+        if (ROLE != 'superadmin')
+            return head('Approval', 'Halaman ini khusus untuk akun Super Admin.');
+        const rows = DB.approvals || [], pending = rows.filter(r => r.status == 'pending'), done = rows.filter(r => r.status != 'pending');
+        const ringkas = r => { try {
+            const p = r.payload || {};
+            if (r.action == 'delete')
+                return 'Hapus data ID #' + r.record_id;
+            const keys = Object.keys(p).filter(k => p[k] !== '' && p[k] != null).slice(0, 3);
+            return keys.map(k => `${k}: ${esc(String(p[k]))}`).join(' · ') || '(tidak ada rincian)';
+        }
+        catch {
+            return '';
+        } };
+        const row = (r, withAction) => `<tr><td>${r.requested_at ? fd(String(r.requested_at).slice(0, 10)) : ''}</td><td>${esc(r.requested_by || '')}</td><td>${esc(TABLE_LABELS[r.table_name] || r.table_name)}</td><td>${esc(ACT_LABEL[r.action] || r.action)}</td><td style="max-width:320px;white-space:normal">${ringkas(r)}</td><td>${withAction ? `<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn p" data-a="approve" data-id="${r.id}">✔ Setujui</button><button class="btn" data-a="reject" data-id="${r.id}">✕ Tolak</button></div>` : bd(r.status == 'approved' ? 'Disetujui' : 'Ditolak') + (r.note ? ` <span style="color:var(--m);font-size:12px">— ${esc(r.note)}</span>` : '')}</td></tr>`;
+        const table = (title, list, withAction) => `<div class="card"><div class="ch"><h3>${title}</h3></div><div class="tw"><table><thead><tr><th>Tanggal</th><th>Diajukan oleh</th><th>Tabel</th><th>Aksi</th><th>Rincian</th><th>${withAction ? 'Keputusan' : 'Status'}</th></tr></thead><tbody>${list.length ? list.map(r => row(r, withAction)).join('') : '<tr><td colspan="99" class="empty">Belum ada data</td></tr>'}</tbody></table></div></div>`;
+        return head('Persetujuan Perubahan Data', 'Setiap penambahan, perubahan, dan penghapusan data oleh admin wajib disetujui di sini sebelum benar-benar berlaku.') +
+            kpis([kpi('Menunggu persetujuan', pending.length), kpi('Disetujui', cnt(rows, r => r.status == 'approved'), '', 2), kpi('Ditolak', cnt(rows, r => r.status == 'rejected'), '', 3)]) +
+            table('Menunggu Persetujuan', pending, true) +
+            table('Riwayat Keputusan (50 terakhir)', done.slice(0, 50), false);
+    }
 };
