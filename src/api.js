@@ -33,6 +33,18 @@ export async function login(username, password) {
   return j;
 }
 
+// Aksi Super Admin: menyetujui/menolak pengajuan tambah/ubah/hapus data (lihat api/approvals.js).
+export async function approvalAction(id, action, note) {
+  const r = await fetch('/api/approvals', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, action, note }),
+  });
+  const j = await r.json();
+  if (!r.ok || j.error) throw new Error(j.error || 'Gagal memproses pengajuan');
+  return j;
+}
+
 export async function logout() {
   try {
     await fetch('/api/auth/logout', { method: 'POST' });

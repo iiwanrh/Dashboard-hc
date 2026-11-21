@@ -7,5 +7,5 @@ export default function handler(req, res) {
     res.status(200).json({ login: false });
     return;
   }
-  res.status(200).json({ login: true, nama: session.nama || '', username: session.username || '' });
+  res.status(200).json({ login: true, nama: session.nama || '', username: session.username || '', role: session.role || 'admin' });
 }
